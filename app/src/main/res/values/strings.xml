@@ -1,0 +1,49 @@
+<resources>
+    <string name="app_name">GTPP</string>
+
+    <!--Strings related to login-->
+    <string name="prompt_user">Usuário</string>
+    <string name="prompt_password">Senha</string>
+    <string name="action_sign_in">Entrar</string>
+    <string name="action_sign_in_short">Entrar</string>
+    <string name="error_invalid_user">Usuário inválido</string>
+    <string name="error_invalid_password">Senha muito curta</string>
+    <string name="error_incorrect_password">Usuário e/ou senha incorretos</string>
+    <string name="error_field_required">Campo obrigatório</string>
+    <string name="permission_rationale">"A permissão ao acesso externo é necessária."</string>
+    <string name="descricao">Descrição</string>
+    <string name="title_activity_main">MainActivity</string>
+
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="m">M</string>
+    <string name="filtrar">Filtrar</string>
+    <string name="criar">CRIAR</string>
+    <string name="todo">TODO</string>
+    <string name="nova_tarefa">NOVA TAREFA</string>
+    <string name="cancelar">CANCELAR</string>
+    <string name="baixa">Baixa (não emite notificações)</string>
+    <string name="m_dia">Média (emite algumas notificações)</string>
+    <string name="alta">Alta (emite todas as notificações)</string>
+    <string name="prioridade">PRIORIDADE</string>
+    <string name="data_fim">Data Fim</string>
+    <string name="data_inicio">Data Início</string>
+    <string name="exclamation">!</string>
+    <string name="full_description">Full Description</string>
+    <string name="task_item">Itens da tarefa em:</string>
+    <string name="button">Button</string>
+    <string name="taskname">TaskName</string>
+    <string name="percent">0%</string>
+    <string name="item">Novo item</string>
+    <string name="description">Descrição</string>
+    <string name="show">Apresentação</string>
+    <string name="state_filter">FILTRAR POR ESTADO</string>
+    <string name="reason">Descreva o motivo</string>
+    <string name="company">Companhia</string>
+</resources>

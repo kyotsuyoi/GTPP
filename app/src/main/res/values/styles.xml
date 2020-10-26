@@ -1,0 +1,37 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="AppThemeToolBar" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- your app branding color for the app bar -->
+        <item name="colorPrimary">#7ab64d</item>
+        <!-- darker variant for the status bar and contextual app bars -->
+        <item name="colorPrimaryDark">#5fa130</item>
+        <!-- theme UI controls like checkboxes and text fields -->
+        <item name="colorAccent">#f1532c</item>
+    </style>
+
+    <style name="SearchViewStyle" parent="Widget.AppCompat.SearchView">
+        <item name="queryHint">Nome da tarefa</item>
+        <item name="android:textColorPrimary">@color/textColor</item>
+        <item name="android:textColorHint">@color/textColor</item>
+        <item name="android:tint">@color/textColor</item>
+        <item name="android:textColorSecondary">@color/colorGrey</item>
+    </style>
+
+</resources>
