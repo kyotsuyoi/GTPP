@@ -30,7 +30,7 @@ Quando os intens são marcados o percentual de conclusão aumenta, se for maior 
 Logo abaixo da lista, existe um campo para inserir novos itens (gif 13).<br/>
 Confirme a inserção no botão ao lado (gif 14).<br/>
 ![](app/gifs/check_state3.gif) ![](app/gifs/check_state4.gif)<br/>
-Quando marcar todos os intens e a tarefa chegar a 100% seu estado mudará para ANALISE, isso significa que o criador da tarefa deve analisar se todos os itens foram realmente concluidos (gif 15).<br/>
+Quando marcar todos os itens e a tarefa chegar a 100% seu estado mudará para ANALISE, isso significa que o criador da tarefa deve analisar se todos os itens foram realmente concluidos (gif 15).<br/>
 Click no botão de estado para confirmar a conclusão da tarefa (gif 16).<br/>
 ![](app/gifs/check_state5.gif) ![](app/gifs/check_state6.gif)<br/>
 Um diálogo de confirmação irá aparecer (gif 17).<br/>
@@ -38,5 +38,17 @@ Ao confirmar o estado mudará para FEITO (gif 18). Apertando no botão de estado
 ![](app/gifs/check_state7.gif) ![](app/gifs/check_state8.gif)<br/>
 É preciso inserir o motivo da reabertura da tarefa (gif 19).<br/>
 ![](app/gifs/check_state9.gif)<br/>
-Você pode desmarcar, ou alterar as infirmações da tarefa, quando um item é desmarcado, a tarefa muda de ANALISE para FAZENDO (gif 20).<br/>
-![](app/gifs/check_state10.gif)<br/>
+Você pode desmarcar, ou alterar as informações da tarefa, quando um item é desmarcado, a tarefa muda de ANALISE para FAZENDO (gif 20).<br/>
+Para remover um item é só usar o botão com ícone de lixeira de cada item (gif 21).<br/>
+![](app/gifs/check_state10.gif) ![](app/gifs/check_state11.gif)<br/>
+# DESCRIÇÃO COMPLETA DA TAREFA
+Você pode inserir uma descrição completa da tarefa pelo botão com ícone de lápis (gif 22).<br/>
+Ao confirmar, a descrição ficará visível na tarefa (gif 23).<br/>
+![](app/gifs/description1.gif) ![](app/gifs/description2.gif)<br/>
+# PARTICIPANTES DA TAREFA
+É possível vincular outros usuários para a tarefa acionando o botão de usuários (gif 24).<br/>
+O criador da tarefa e os usuários vinculados ficam visíveis (gif 25).<br/>
+![](app/gifs/guest1.gif) ![](app/gifs/guest2.gif)<br/>
+# HISTÓRICO DA TAREFA
+Tudo que é feito na tarefa é gravado em seu histórico, como mudança de estado, alteração de datas, usuários vinculados ou removidos, etc... (gif 26).<br/>
+O histórico grava uma descrição com data e hora (gif 27).<br/>
