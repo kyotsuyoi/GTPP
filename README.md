@@ -1,5 +1,6 @@
 # LOGIN
 O login pede usuário e senha e dá a opção de salvar o usuário.
+#
 ![](app/gifs/login.gif)
 # CRIAR TAREFA
 Para criar a tarefa, click no botão com sinal de MAIS do menu principal (gif 1), depois insira o nome da tarefa e a prioridade (gif 2).
