@@ -12,13 +12,13 @@ Então click no botão CRIAR.
 # BUSCA POR DESCRIÇÃO
 Para filtrar as tarefas pela descrição, é só dar um click na lupa na barra da aplicação (gif 1).<br/>
 Depois conforme o texto digitado vai mudando, a lista vai se adequando a busca (gif 2).<br/>
-![](app/gifs/task_search1.gif)![](app/gifs/task_search2.gif)
+![](app/gifs/task_search1.gif) ![](app/gifs/task_search2.gif)
 # INFORMAÇÕES DO USUÁRIO
 Na barra superior da aplicação aparece a foto do usuário, a cor da borda indica se está conectado ao servidor, vermelho offline e ver online (gif 1).<br/>
 Com o click na foto irá aparecer as informações da pessoa conectada (gif 2).<br/>
 Caso seja administrador, irá estar disponível um check para visualização como administrador, isso significa que poderá ver todas as tarefas já cadastradas.<br/>
-![](app/gifs/user_info1.gif)![](app/gifs/user_info2.gif)
+![](app/gifs/user_info1.gif) ![](app/gifs/user_info2.gif)
 # FILTRO POR ESTADO DA TAREFA E VINCULO DE LOJAS
 Para isso e um click no botão de ordenação (gif 1).<br/>
 Selecione seus filtros e dê um OK (gif 2).<br/>
-![](app/gifs/task_filter1.gif)![](app/gifs/task_filter2.gif)
+![](app/gifs/task_filter1.gif) ![](app/gifs/task_filter2.gif)
