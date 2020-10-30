@@ -52,3 +52,4 @@ O criador da tarefa e os usuários vinculados ficam visíveis (gif 25).<br/>
 # HISTÓRICO DA TAREFA
 Tudo que é feito na tarefa é gravado em seu histórico, como mudança de estado, alteração de datas, usuários vinculados ou removidos, etc... (gif 26).<br/>
 O histórico grava uma descrição com data e hora (gif 27).<br/>
+![](app/gifs/historic1.gif) ![](app/gifs/historic2.gif)<br/>
