@@ -53,3 +53,13 @@ O criador da tarefa e os usuários vinculados ficam visíveis (gif 25).<br/>
 Tudo que é feito na tarefa é gravado em seu histórico, como mudança de estado, alteração de datas, usuários vinculados ou removidos, etc... (gif 26).<br/>
 O histórico grava uma descrição com data e hora (gif 27).<br/>
 ![](app/gifs/historic1.gif) ![](app/gifs/historic2.gif)<br/>
+# CHAT DE CADA TAREFA
+Cada tarefa tem um chat interno que pode ser acessado pelo botão do chat (gif 28).<br/>
+Quando um integrande da tarefa envia uma mensagem a notificação mostra quem enviou a mensagem e de qual tarefa ela é (gif 29).<br/>
+![](app/gifs/chat1.gif) ![](app/gifs/chat2.gif)<br/>
+A mensagem resposta é facil de ser enviada (gif 30).<br/>
+Durante o acesso ao chat, a mensagem aparece sem notificação (gif 31).<br/>
+![](app/gifs/chat3.gif) ![](app/gifs/chat4.gif)<br/>
+Também é possível enviar imagens com mensagens ou sem (gif 32).<br/>
+O botão de foto indica quando a imagem está sendo enviada (gif 33).<br/>
+![](app/gifs/chat5.gif) ![](app/gifs/chat6.gif)<br/>
