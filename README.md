@@ -8,7 +8,7 @@ As datas de início e fim da tarefa são selecionadas por um DatePicker, a data 
 A descrição não pode ficar vazia e as datas não podem ficar vazias e nem em formato incorreto.<br/>
 Então click no botão CRIAR.
 <br/>
-![](app/gifs/task_create1.gif)![](app/gifs/task_create2.gif)![](app/gifs/task_create3.gif)![](app/gifs/task_create4.gif)
+![](app/gifs/task_create1.gif) ![](app/gifs/task_create2.gif) ![](app/gifs/task_create3.gif) ![](app/gifs/task_create4.gif)
 # BUSCA POR DESCRIÇÃO
 Para filtrar as tarefas pela descrição, é só dar um click na lupa na barra da aplicação (gif 1).<br/>
 Depois conforme o texto digitado vai mudando, a lista vai se adequando a busca (gif 2).<br/>
