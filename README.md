@@ -1,2 +1,2 @@
 # GTPP
-![](gifs/login.gif)
+![](app/gifs/login.gif)
