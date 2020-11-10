@@ -14,6 +14,7 @@ public interface MainInterface {
 
     @GET("GTPP/Task.php")
     Call<JsonObject> GetTask(
+            @Query("app_id") int app_id,
             @Query("AUTH") String auth,
             @Query("user_id") int user_id,
             @Query("mobile") int mobile,
@@ -22,6 +23,7 @@ public interface MainInterface {
 
     @POST("GTPP/Task.php")
     Call<JsonObject> PostTask(
+            @Query("app_id") int app_id,
             @Query("AUTH") String auth,
             @Query("mobile") int mobile,
             @Body JsonObject jsonObject
@@ -29,23 +31,27 @@ public interface MainInterface {
 
     @PUT("GTPP/Task.php")
     Call<JsonObject> PutTask(
+            @Query("app_id") int app_id,
             @Query("AUTH") String auth,
             @Body JsonObject jsonObject
     );
 
     @GET("Company.php")
     Call<JsonObject> GetCompany(
+            @Query("app_id") int app_id,
             @Query("AUTH") String auth
     );
 
     @GET("Shop.php")
     Call<JsonObject> GetShop(
+            @Query("app_id") int app_id,
             @Query("AUTH") String auth,
             @Query("company_id") int company_id
     );
 
     @GET("Departament.php")
     Call<JsonObject> GetDepartment(
+            @Query("app_id") int app_id,
             @Query("AUTH") String auth,
             @Query("company_id") int company_id,
             @Query("shop_id") int shop_id
@@ -53,6 +59,7 @@ public interface MainInterface {
 
     @GET("Departament.php")
     Call<JsonObject> GetDepartmentCheck(
+            @Query("app_id") int app_id,
             @Query("AUTH") String auth,
             @Query("company_id") int company_id,
             @Query("shop_id") int shop_id,
@@ -61,23 +68,27 @@ public interface MainInterface {
 
     @GET("GTPP/TaskState.php")
     Call<JsonObject> GetTaskState(
+            @Query("app_id") int app_id,
             @Query("AUTH") String auth
     );
 
     @DELETE("GTPP/Task.php")
     Call<JsonObject> DeleteTask(
+            @Query("app_id") int app_id,
             @Query("AUTH") String auth,
             @Query("id") int id
     );
 
     @GET("Employee.php")
     Call<JsonObject> GetEmployee(
+            @Query("app_id") int app_id,
             @Query("AUTH") String auth,
             @Query("id") int id
     );
 
     @GET("EmployeePhoto.php")
     Call<JsonObject> GetEmployeePhoto(
+            @Query("app_id") int app_id,
             @Query("AUTH") String auth,
             @Query("id") int id
     );

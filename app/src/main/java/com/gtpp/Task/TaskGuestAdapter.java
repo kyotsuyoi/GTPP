@@ -31,6 +31,8 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import static com.gtpp.CommonClasses.Handler.getAppID;
+
 public class TaskGuestAdapter extends RecyclerView.Adapter <TaskGuestAdapter.ViewHolder> {
 
     private JsonArray List;
@@ -129,7 +131,7 @@ public class TaskGuestAdapter extends RecyclerView.Adapter <TaskGuestAdapter.Vie
                 return;
             }
 
-            Call<JsonObject> call = mainInterface.GetEmployeePhoto(UserSession,UserID);
+            Call<JsonObject> call = mainInterface.GetEmployeePhoto(getAppID(), UserSession,UserID);
             call.enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
@@ -208,7 +210,7 @@ public class TaskGuestAdapter extends RecyclerView.Adapter <TaskGuestAdapter.Vie
 
     private void GetEmployee(int UserID){
         try {
-            Call<JsonObject> call = mainInterface.GetEmployee(UserSession,UserID);
+            Call<JsonObject> call = mainInterface.GetEmployee(getAppID(), UserSession,UserID);
             call.enqueue(new Callback<JsonObject>() {
                 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
                 @Override
@@ -271,7 +273,7 @@ public class TaskGuestAdapter extends RecyclerView.Adapter <TaskGuestAdapter.Vie
             JsonObject jsonObject = new JsonObject();
             jsonObject.addProperty("task_id",TaskID);
             jsonObject.addProperty("user_id",UserID);
-            Call<JsonObject> call = taskInterface.PutTaskUser(
+            Call<JsonObject> call = taskInterface.PutTaskUser(getAppID(),
                     UserSession,
                     jsonObject
             );

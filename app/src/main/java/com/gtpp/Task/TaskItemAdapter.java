@@ -25,6 +25,8 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import static com.gtpp.CommonClasses.Handler.getAppID;
+
 public class TaskItemAdapter extends RecyclerView.Adapter <TaskItemAdapter.ViewHolder> {
 
     private JsonArray List, FilteredList;
@@ -143,7 +145,7 @@ public class TaskItemAdapter extends RecyclerView.Adapter <TaskItemAdapter.ViewH
             jsonObject.addProperty("task_id",taskObject.get("id").getAsInt());
             jsonObject.addProperty("check",checkBox.isChecked());
             jsonObject.addProperty("id",ID);
-            Call<JsonObject> call = taskInterface.PutTaskItem(
+            Call<JsonObject> call = taskInterface.PutTaskItem(getAppID(),
                     SU.getSession(),
                     jsonObject
             );
@@ -217,7 +219,7 @@ public class TaskItemAdapter extends RecyclerView.Adapter <TaskItemAdapter.ViewH
 
     private void DeleteTaskItem(int ID, int position){
         try {
-            Call<JsonObject> call = taskInterface.DeleteTaskItem(
+            Call<JsonObject> call = taskInterface.DeleteTaskItem(getAppID(),
                     SU.getSession(),
                     taskObject.get("id").getAsInt(),
                     ID

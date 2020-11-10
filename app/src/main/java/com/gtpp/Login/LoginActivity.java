@@ -3,7 +3,6 @@ package com.gtpp.Login;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -35,7 +34,6 @@ import android.widget.EditText;
 
 import com.google.gson.JsonObject;
 import com.gtpp.CommonClasses.ApiClient;
-import com.gtpp.CommonClasses.AppService;
 import com.gtpp.CommonClasses.Handler;
 import com.gtpp.CommonClasses.SavedUser;
 import com.gtpp.Main.MainActivity;
@@ -51,6 +49,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
+import static com.gtpp.CommonClasses.Handler.getAppID;
 
 public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<Cursor> {
 
@@ -372,6 +371,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
     private void GetSystemVersion(){
         try {
+            ShowLoginForm(false);
             systemVersionCall = loginInterface.GetAppVersion();
             Handler.ShowSnack("Aguarde por favor...",null,This,R_ID,false);
             systemVersionCall.enqueue(new Callback<JsonObject>() {
@@ -442,11 +442,12 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
     private void PostLogin(String user, String password, String Session) {
         try {
+            ShowLoginForm(false);
             JsonObject jsonObject = new JsonObject();
             jsonObject.addProperty("user",user);
             jsonObject.addProperty("password",password);
             jsonObject.addProperty("session",Session);
-            loginCall = loginInterface.PostLogin(jsonObject);
+            loginCall = loginInterface.PostLogin(getAppID(), jsonObject);
 
             loginCall.enqueue(new Callback<JsonObject>() {
                 @RequiresApi(api = Build.VERSION_CODES.O)
@@ -477,6 +478,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                                 R_ID,
                                 true
                         );
+                        ShowLoginForm(true);
                     }
                 }
 
@@ -489,6 +491,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                             R_ID,
                             true
                     );
+                    ShowLoginForm(true);
                 }
             });
         }catch (Exception e){
@@ -499,9 +502,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     R_ID,
                     true
             );
+            ShowLoginForm(true);
         }
-
-        ShowLoginForm(true);
     }
 
 }

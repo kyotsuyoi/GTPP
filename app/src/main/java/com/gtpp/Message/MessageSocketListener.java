@@ -30,6 +30,8 @@ import okhttp3.WebSocketListener;
 import retrofit2.Call;
 import retrofit2.Callback;
 
+import static com.gtpp.CommonClasses.Handler.getAppID;
+
 public class MessageSocketListener extends WebSocketListener {
     public MessageActivity activity;
     public MessageAdapter adapter;
@@ -174,7 +176,7 @@ public class MessageSocketListener extends WebSocketListener {
 
     private void GetMessage(){
         try {
-            Call<JsonObject> call = messageInterface.GetMessage(
+            Call<JsonObject> call = messageInterface.GetMessage(getAppID(),
                     SU.getSession(),
                     TaskID
             );
@@ -241,7 +243,7 @@ public class MessageSocketListener extends WebSocketListener {
 
     private void DeleteMessage(int position){
         try {
-            Call<JsonObject> call = messageInterface.DeleteMessage(
+            Call<JsonObject> call = messageInterface.DeleteMessage(getAppID(),
                     SU.getSession(),
                     adapter.getItem(position).getAsJsonObject().get("id").getAsInt(),
                     TaskID

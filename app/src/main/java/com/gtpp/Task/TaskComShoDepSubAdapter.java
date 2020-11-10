@@ -33,6 +33,8 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import static com.gtpp.CommonClasses.Handler.getAppID;
+
 public class TaskComShoDepSubAdapter extends RecyclerView.Adapter <TaskComShoDepSubAdapter.ViewHolder> {
 
     private JsonArray List, FilteredList;
@@ -179,7 +181,7 @@ public class TaskComShoDepSubAdapter extends RecyclerView.Adapter <TaskComShoDep
             jsonObject.addProperty("company_id",TaskObject.get("company_id").getAsInt());
             jsonObject.addProperty("shop_id",TaskObject.get("shop_id").getAsInt());
             jsonObject.addProperty("depart_id",DepartmentID);
-            Call<JsonObject> call = taskInterface.PostComShoDepSub(
+            Call<JsonObject> call = taskInterface.PostComShoDepSub(getAppID(),
                     UserSession,
                     jsonObject
             );

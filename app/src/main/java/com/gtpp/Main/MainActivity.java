@@ -63,6 +63,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
+import static com.gtpp.CommonClasses.Handler.getAppID;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class MainActivity extends AppCompatActivity implements com.wdullaer.materialdatetimepicker.date.DatePickerDialog.OnDateSetListener {
@@ -136,10 +137,10 @@ public class MainActivity extends AppCompatActivity implements com.wdullaer.mate
         SetAlpha();
         SetSearchView();
 
-        Handler.isLogged = true;
+        com.gtpp.CommonClasses.Handler.isLogged = true;
 
         serviceIntent = new Intent(getBaseContext(), AppService.class);
-        startForegroundService(serviceIntent);
+        //startForegroundService(serviceIntent);
 
         MainActivity.cardViewSession.setCardBackgroundColor(ContextCompat.getColor(this, R.color.colorGreen));
     }
@@ -199,7 +200,7 @@ public class MainActivity extends AppCompatActivity implements com.wdullaer.mate
 
     private void GetEmployee(){
         try {
-            Call<JsonObject> call = mainInterface.GetEmployee(SU.getSession(),SU.getId());
+            Call<JsonObject> call = mainInterface.GetEmployee(getAppID(), SU.getSession(),SU.getId());
             call.enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
@@ -240,7 +241,7 @@ public class MainActivity extends AppCompatActivity implements com.wdullaer.mate
                 return;
             }
 
-            Call<JsonObject> call = mainInterface.GetEmployeePhoto(SU.getSession(),SU.getId());
+            Call<JsonObject> call = mainInterface.GetEmployeePhoto(getAppID(), SU.getSession(),SU.getId());
             call.enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
@@ -283,7 +284,7 @@ public class MainActivity extends AppCompatActivity implements com.wdullaer.mate
             if(SU.isAdminVisualization()){
                 admin = 1;
             }
-            Call<JsonObject> call = mainInterface.GetTask(
+            Call<JsonObject> call = mainInterface.GetTask(getAppID(),
                     SU.getSession(),
                     SU.getId(),
                     1,
@@ -318,7 +319,7 @@ public class MainActivity extends AppCompatActivity implements com.wdullaer.mate
 
     private void GetCompany(Spinner spinner){
         try {
-            Call<JsonObject> call = mainInterface.GetCompany(SU.getSession());
+            Call<JsonObject> call = mainInterface.GetCompany(getAppID(), SU.getSession());
             call.enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
@@ -359,7 +360,7 @@ public class MainActivity extends AppCompatActivity implements com.wdullaer.mate
 
     private void GetShop(Spinner spinner, int CompanyID){
         try {
-            Call<JsonObject> call = mainInterface.GetShop(SU.getSession(),CompanyID);
+            Call<JsonObject> call = mainInterface.GetShop(getAppID(), SU.getSession(),CompanyID);
             call.enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
@@ -400,7 +401,7 @@ public class MainActivity extends AppCompatActivity implements com.wdullaer.mate
 
     private void GetDepartment(Spinner spinner, int CompanyID, int ShopID){
         try {
-            Call<JsonObject> call = mainInterface.GetDepartment(SU.getSession(),CompanyID,ShopID);
+            Call<JsonObject> call = mainInterface.GetDepartment(getAppID(), SU.getSession(),CompanyID,ShopID);
             call.enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
@@ -441,7 +442,7 @@ public class MainActivity extends AppCompatActivity implements com.wdullaer.mate
 
     private void GetTaskState(){
         try {
-            Call<JsonObject> call = mainInterface.GetTaskState(SU.getSession());
+            Call<JsonObject> call = mainInterface.GetTaskState(getAppID(), SU.getSession());
             call.enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
@@ -605,7 +606,10 @@ public class MainActivity extends AppCompatActivity implements com.wdullaer.mate
                     alert.setCancelable(false);
                     alert.setNeutralButton("Cancelar", (dialog, which) -> dialog.cancel());
 
-                    alert.setNegativeButton("Alterar", (dialog, which) -> SetDialogTaskUpdate(position));
+                    int state_id = adapter.getItemState(position);
+                    if(state_id != 5 && state_id != 6 && state_id != 7){
+                        alert.setNegativeButton("Alterar", (dialog, which) -> SetDialogTaskUpdate(position));
+                    }
 
                     alert.setPositiveButton("Excluir", (dialog, which) -> DialogTaskDelete(ID,position));
 
@@ -739,7 +743,7 @@ public class MainActivity extends AppCompatActivity implements com.wdullaer.mate
             InsertObject.addProperty("priority",CheckedRadioButton);
             InsertObject.addProperty("user_id",SU.getId());
 
-            Call<JsonObject> call = mainInterface.PostTask(
+            Call<JsonObject> call = mainInterface.PostTask(getAppID(),
                     SU.getSession(),
                     1,
                     InsertObject
@@ -972,7 +976,7 @@ public class MainActivity extends AppCompatActivity implements com.wdullaer.mate
 
     private void DeleteTask(int ID, int position){
         try {
-            Call<JsonObject> call = mainInterface.DeleteTask(
+            Call<JsonObject> call = mainInterface.DeleteTask(getAppID(),
                     SU.getSession(),
                     ID
             );
@@ -1097,7 +1101,7 @@ public class MainActivity extends AppCompatActivity implements com.wdullaer.mate
             jsonObject.addProperty("priority",Priority);
             jsonObject.addProperty("id",adapter.getItem(position).get("id").getAsInt());
 
-            Call<JsonObject> call = mainInterface.PutTask(
+            Call<JsonObject> call = mainInterface.PutTask(getAppID(),
                     SU.getSession(),
                     jsonObject
             );

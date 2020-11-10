@@ -28,6 +28,8 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import static com.gtpp.CommonClasses.Handler.getAppID;
+
 public class TaskCheckUserAdapter extends RecyclerView.Adapter <TaskCheckUserAdapter.ViewHolder> {
 
     private JsonArray List, FilteredList;
@@ -63,6 +65,7 @@ public class TaskCheckUserAdapter extends RecyclerView.Adapter <TaskCheckUserAda
             viewHolder.checkBox.setText(jsonObject.get("name").getAsString());
             viewHolder.checkBox.setChecked(jsonObject.get("check").getAsBoolean());
 
+            viewHolder.imageView.setImageBitmap(null);
             GetEmployeePhoto(viewHolder.imageView,UserID);
 
             viewHolder.checkBox.setOnClickListener(v->{
@@ -121,7 +124,7 @@ public class TaskCheckUserAdapter extends RecyclerView.Adapter <TaskCheckUserAda
                 return;
             }
 
-            Call<JsonObject> call = mainInterface.GetEmployeePhoto(UserSession,UserID);
+            Call<JsonObject> call = mainInterface.GetEmployeePhoto(getAppID(), UserSession,UserID);
             call.enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
@@ -169,7 +172,7 @@ public class TaskCheckUserAdapter extends RecyclerView.Adapter <TaskCheckUserAda
             JsonObject jsonObject = new JsonObject();
             jsonObject.addProperty("task_id",TaskID);
             jsonObject.addProperty("user_id",UserID);
-            Call<JsonObject> call = taskInterface.PutTaskUser(
+            Call<JsonObject> call = taskInterface.PutTaskUser(getAppID(),
                     UserSession,
                     jsonObject
             );

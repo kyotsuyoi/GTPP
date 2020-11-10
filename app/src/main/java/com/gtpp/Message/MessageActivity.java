@@ -38,6 +38,8 @@ import okhttp3.WebSocket;
 import retrofit2.Call;
 import retrofit2.Callback;
 
+import static com.gtpp.CommonClasses.Handler.getAppID;
+
 public class MessageActivity extends AppCompatActivity {
 
     private SavedUser SU;
@@ -211,7 +213,7 @@ public class MessageActivity extends AppCompatActivity {
             progressBar.setVisibility(View.VISIBLE);
             buttonCam.setEnabled(false);
             buttonCam.setAlpha(0.2f);
-            Call<JsonObject> call = messageInterfaceForImage.PostMessage(
+            Call<JsonObject> call = messageInterfaceForImage.PostMessage(getAppID(),
                     SU.getSession(),
                     jsonMessage
             );

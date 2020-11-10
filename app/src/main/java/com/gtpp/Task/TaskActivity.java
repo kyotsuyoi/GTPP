@@ -52,6 +52,8 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import static com.gtpp.CommonClasses.Handler.getAppID;
+
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class TaskActivity extends AppCompatActivity {
 
@@ -176,7 +178,7 @@ public class TaskActivity extends AppCompatActivity {
 
     private void GetTask(){
         try {
-            Call<JsonObject> call = taskInterface.GetTask(SU.getSession(),1,TaskObject.get("id").getAsInt());
+            Call<JsonObject> call = taskInterface.GetTask(getAppID(), SU.getSession(),1,TaskObject.get("id").getAsInt());
             call.enqueue(new Callback<JsonObject>() {
                 @RequiresApi(api = Build.VERSION_CODES.N)
                 @Override
@@ -373,7 +375,7 @@ public class TaskActivity extends AppCompatActivity {
             JsonObject ItemObject = new JsonObject();
             ItemObject.addProperty("description",textInputEditTextItem.getText().toString());
             ItemObject.addProperty("task_id",TaskObject.get("id").getAsInt());
-            Call<JsonObject> call = taskInterface.PostTaskItem(SU.getSession(),ItemObject);
+            Call<JsonObject> call = taskInterface.PostTaskItem(getAppID(), SU.getSession(),ItemObject);
             call.enqueue(new Callback<JsonObject>() {
                 @RequiresApi(api = Build.VERSION_CODES.N)
                 @Override
@@ -686,7 +688,7 @@ public class TaskActivity extends AppCompatActivity {
 
     private void GetHistoric(RecyclerView recyclerView){
         try {
-            Call<JsonObject> call = taskInterface.GetHistoric(SU.getSession(),TaskObject.get("id").getAsInt());
+            Call<JsonObject> call = taskInterface.GetHistoric(getAppID(), SU.getSession(),TaskObject.get("id").getAsInt());
             call.enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
@@ -727,7 +729,7 @@ public class TaskActivity extends AppCompatActivity {
             ItemObject.addProperty("task_id",TaskObject.get("id").getAsInt());
             ItemObject.addProperty("historic_description",HistoricDescription);
 
-            Call<JsonObject> call = taskInterface.PutTaskState(SU.getSession(),ItemObject);
+            Call<JsonObject> call = taskInterface.PutTaskState(getAppID(), SU.getSession(),ItemObject);
             call.enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
@@ -790,7 +792,7 @@ public class TaskActivity extends AppCompatActivity {
             jsonObject.addProperty("days",textInputEditTextPutDays.getText().toString());
             jsonObject.addProperty("task_id",TaskObject.get("id").getAsInt());
 
-            Call<JsonObject> call = taskInterface.PutDays(
+            Call<JsonObject> call = taskInterface.PutDays(getAppID(),
                     SU.getSession(),
                     jsonObject
             );
@@ -840,7 +842,7 @@ public class TaskActivity extends AppCompatActivity {
 
     private void GetTaskUser(RecyclerView recyclerView){
         try {
-            Call<JsonObject> call = taskInterface.GetTaskUser(SU.getSession(),1, TaskObject.get("id").getAsInt());
+            Call<JsonObject> call = taskInterface.GetTaskUser(getAppID(), SU.getSession(),1, TaskObject.get("id").getAsInt());
             call.enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
@@ -1051,7 +1053,7 @@ public class TaskActivity extends AppCompatActivity {
 
     private void GetCompany(RecyclerView recyclerView){
         try {
-            Call<JsonObject> call = mainInterface.GetCompany(SU.getSession());
+            Call<JsonObject> call = mainInterface.GetCompany(getAppID(), SU.getSession());
             call.enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
@@ -1083,7 +1085,7 @@ public class TaskActivity extends AppCompatActivity {
 
     private void GetShop(RecyclerView recyclerView){
         try {
-            Call<JsonObject> call = mainInterface.GetShop(SU.getSession(),TaskObject.get("company_id").getAsInt());
+            Call<JsonObject> call = mainInterface.GetShop(getAppID(), SU.getSession(),TaskObject.get("company_id").getAsInt());
             call.enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
@@ -1115,7 +1117,7 @@ public class TaskActivity extends AppCompatActivity {
 
     private void GetDepartment(RecyclerView recyclerView){
         try {
-            Call<JsonObject> call = mainInterface.GetDepartmentCheck(
+            Call<JsonObject> call = mainInterface.GetDepartmentCheck(getAppID(),
                     SU.getSession(),
                     TaskObject.get("company_id").getAsInt(),
                     TaskObject.get("shop_id").getAsInt(),

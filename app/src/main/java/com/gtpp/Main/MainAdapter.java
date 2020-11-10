@@ -93,7 +93,7 @@ public class MainAdapter extends RecyclerView.Adapter <MainAdapter.ViewHolder> {
 
             int expire = FilteredList.get(position).getAsJsonObject().get("expire").getAsInt();
 
-            if (StateID != 3 && StateID != 6 && StateID != 7) {
+            if (StateID != 6 && StateID != 7) {
                 if (expire < 8 && expire > 0) {
                     viewHolder.Exclamation.setTextColor(ContextCompat.getColor(activity, R.color.colorYellow));
                     viewHolder.Exclamation.startAnimation(ExclamationAnimation);

@@ -30,6 +30,8 @@ import java.util.Locale;
 import retrofit2.Call;
 import retrofit2.Callback;
 
+import static com.gtpp.CommonClasses.Handler.getAppID;
+
 public class MessageAdapter extends RecyclerView.Adapter <MessageAdapter.ViewHolder> {
 
     private JsonArray List;
@@ -189,7 +191,7 @@ public class MessageAdapter extends RecyclerView.Adapter <MessageAdapter.ViewHol
                 return;
             }
 
-            Call<JsonObject> call = messageInterfaceForImage.GetMessageImage(
+            Call<JsonObject> call = messageInterfaceForImage.GetMessageImage(getAppID(),
                     SU.getSession(),
                     MessageID
             );

@@ -7,8 +7,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
-import android.os.Build;
-import android.support.annotation.RequiresApi;
 import android.support.design.widget.Snackbar;
 import android.util.Base64;
 import android.view.View;
@@ -30,6 +28,10 @@ public class Handler {
 
     public static int SelectedTaskID; //Store the task that user is choose
     public static boolean isLogged = false;
+
+    public static int getAppID() {
+        return 2;
+    }
 
     public boolean isRequestError(Response<JsonObject> response, Activity activity, int R_ID){
         try {
