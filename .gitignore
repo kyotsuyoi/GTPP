@@ -7,5 +7,3 @@
 /build
 /captures
 .externalNativeBuild
-/src/main/java/com/gtpp/CommonClasses/ApiClient.java
-/src/main/java/com/gtpp/CommonClasses/ApiClientForImage.java
