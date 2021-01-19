@@ -81,7 +81,7 @@ public class TaskComShoDepSubAdapter extends RecyclerView.Adapter <TaskComShoDep
 
         }catch (Exception e){
             if(!isBindViewHolderError) {
-                Handler.ShowSnack("Houve um erro", "TaskComShoDepSubAdapter.onBindViewHolder: " + e.getMessage(), activity, R_ID, true);
+                Handler.ShowSnack("Houve um erro", "TaskComShoDepSubAdapter.onBindViewHolder: " + e.getMessage(), activity, R_ID);
                 isBindViewHolderError=true;
             }
         }
@@ -159,7 +159,7 @@ public class TaskComShoDepSubAdapter extends RecyclerView.Adapter <TaskComShoDep
                         results.values = jsonArray;
                         results.count = jsonArray.size();
                     }catch (Exception e){
-                        Handler.ShowSnack("Houve um erro", "TaskComShoDepSubAdapter.getFilter: " + e.getMessage(), activity, R_ID, true);
+                        Handler.ShowSnack("Houve um erro", "TaskComShoDepSubAdapter.getFilter: " + e.getMessage(), activity, R_ID);
                     }
                 }
 
@@ -177,9 +177,10 @@ public class TaskComShoDepSubAdapter extends RecyclerView.Adapter <TaskComShoDep
     private void PutCheck(CheckBox checkBox, int DepartmentID, int position){
         try {
             JsonObject jsonObject = new JsonObject();
+            JsonObject jsonCSDS = TaskObject.get("csds").getAsJsonArray().get(0).getAsJsonObject();
             jsonObject.addProperty("task_id",TaskObject.get("id").getAsInt());
-            jsonObject.addProperty("company_id",TaskObject.get("company_id").getAsInt());
-            jsonObject.addProperty("shop_id",TaskObject.get("shop_id").getAsInt());
+            jsonObject.addProperty("company_id",jsonCSDS.get("company_id").getAsInt());
+            jsonObject.addProperty("shop_id",jsonCSDS.get("shop_id").getAsInt());
             jsonObject.addProperty("depart_id",DepartmentID);
             Call<JsonObject> call = taskInterface.PostComShoDepSub(getAppID(),
                     UserSession,
@@ -203,18 +204,18 @@ public class TaskComShoDepSubAdapter extends RecyclerView.Adapter <TaskComShoDep
                             checkBox.setChecked(!checkBox.isChecked());
                         }
                     }catch (Exception e) {
-                        Handler.ShowSnack("Houve um erro","TaskComShoDepSubAdapter.PutCheck.onResponse: " + e.getMessage(), activity, R_ID,true);
+                        Handler.ShowSnack("Houve um erro","TaskComShoDepSubAdapter.PutCheck.onResponse: " + e.getMessage(), activity, R_ID);
                     }
                 }
 
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","TaskComShoDepSubAdapter.PutCheck.onFailure: " + t.toString(), activity, R_ID,true);
+                    Handler.ShowSnack("Houve um erro","TaskComShoDepSubAdapter.PutCheck.onFailure: " + t.toString(), activity, R_ID);
                 }
             });
 
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskComShoDepSubAdapter.PutCheck: " + e.getMessage(), activity, R_ID,true);
+            Handler.ShowSnack("Houve um erro","TaskComShoDepSubAdapter.PutCheck: " + e.getMessage(), activity, R_ID);
         }
     }
 

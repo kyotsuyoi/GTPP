@@ -19,6 +19,12 @@ import com.google.gson.JsonObject;
 import com.gtpp.CommonClasses.Handler;
 import com.gtpp.R;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 public class MainAdapter extends RecyclerView.Adapter <MainAdapter.ViewHolder> {
 
     private JsonArray List, FilteredList, stateList;
@@ -42,6 +48,8 @@ public class MainAdapter extends RecyclerView.Adapter <MainAdapter.ViewHolder> {
 
     public void onBindViewHolder(ViewHolder viewHolder, int position) {
         try {
+            viewHolder.Exclamation.setVisibility(View.INVISIBLE);
+
             String Description = FilteredList.get(position).getAsJsonObject().get("description").getAsString();
             if(Description.length() > 20){
                 Description = Description.substring(0,20) + "...";
@@ -93,23 +101,19 @@ public class MainAdapter extends RecyclerView.Adapter <MainAdapter.ViewHolder> {
 
             int expire = FilteredList.get(position).getAsJsonObject().get("expire").getAsInt();
 
-            if (StateID != 6 && StateID != 7) {
+            if (StateID != 6 && StateID != 7 && expire <= 8) {
                 if (expire < 8 && expire > 0) {
                     viewHolder.Exclamation.setTextColor(ContextCompat.getColor(activity, R.color.colorYellow));
-                    viewHolder.Exclamation.startAnimation(ExclamationAnimation);
-                } else if (expire < 1) {
-                    viewHolder.Exclamation.setTextColor(Color.RED);
-                    viewHolder.Exclamation.startAnimation(ExclamationAnimation);
                 } else {
-                    viewHolder.Exclamation.setVisibility(View.INVISIBLE);
+                    viewHolder.Exclamation.setTextColor(Color.RED);
                 }
-            }else {
-                viewHolder.Exclamation.setVisibility(View.INVISIBLE);
+                viewHolder.Exclamation.setVisibility(View.VISIBLE);
+                viewHolder.Exclamation.startAnimation(ExclamationAnimation);
             }
 
         }catch (Exception e){
             if(!isBindViewHolderError) {
-                Handler.ShowSnack("Houve um erro", "onCreateViewHolder: " + e.getMessage(), activity, R_ID, true);
+                Handler.ShowSnack("Houve um erro", "onCreateViewHolder: " + e.getMessage(), activity, R_ID);
                 isBindViewHolderError=true;
             }
         }
@@ -160,7 +164,7 @@ public class MainAdapter extends RecyclerView.Adapter <MainAdapter.ViewHolder> {
         return jsonObject.get("user_id").getAsInt();
     }
 
-    public String getItemDescription(int TaskID){
+    /*public String getItemDescription(int TaskID){
         for (int i = 0; i < List.size(); i++) {
             JsonObject jsonObject = List.get(i).getAsJsonObject();
             if(jsonObject.get("id").getAsInt()==TaskID){
@@ -168,6 +172,31 @@ public class MainAdapter extends RecyclerView.Adapter <MainAdapter.ViewHolder> {
             }
         }
         return "null";
+    }*/
+
+    public void OrderBy(String tag){
+        java.util.List<JsonObject> jsonObjectList = new ArrayList<JsonObject>();
+        for (int i = 0; i < FilteredList.size(); i++) {
+            jsonObjectList.add(FilteredList.get(i).getAsJsonObject());
+        }
+        Collections.sort(jsonObjectList, (a, b) -> {
+            String valA = "";
+            String valB = "";
+            try {
+                valA = a.get(tag).getAsString();
+                valB = b.get(tag).getAsString();
+            }
+            catch (Exception e) {
+                //do something
+            }
+
+            return valA.compareTo(valB);
+        });
+        for (int i = 0; i < FilteredList.size(); i++) {
+            FilteredList.set(i,jsonObjectList.get(i).getAsJsonObject());
+        }
+
+        notifyDataSetChanged();
     }
 
     public JsonObject getItem(int position){
@@ -211,7 +240,7 @@ public class MainAdapter extends RecyclerView.Adapter <MainAdapter.ViewHolder> {
         }
     }
 
-    public Filter getFilterAmount(int amount) {
+    public Filter getFilterAmount(int company_id, int shop_id, int department_id) {
         return new Filter()
         {
             protected FilterResults performFiltering(CharSequence charSequence)
@@ -231,10 +260,10 @@ public class MainAdapter extends RecyclerView.Adapter <MainAdapter.ViewHolder> {
                     int i = 0;
                     try {
 
-                        if(amount==1){
+                        if(company_id!=0 && shop_id == 0 && department_id == 0){
                             while (i < FilteredList.size()) {
                                 String A = FilteredList.get(i).getAsJsonObject().get("company_id").getAsString();
-                                String B = charSequence.toString();
+                                String B = String.valueOf(company_id);
                                 if (A.contains(B)) {
                                     jsonArray.add(FilteredList.get(i).getAsJsonObject());
                                 }
@@ -242,11 +271,11 @@ public class MainAdapter extends RecyclerView.Adapter <MainAdapter.ViewHolder> {
                             }
                         }
 
-                        if(amount==2){
+                        if(company_id !=0 && shop_id != 0 && department_id == 0){
                             while (i < FilteredList.size()) {
                                 String A = FilteredList.get(i).getAsJsonObject().get("company_id").getAsString()
                                         + "-" + FilteredList.get(i).getAsJsonObject().get("shop_id").getAsString();
-                                String B = charSequence.toString();
+                                String B = company_id + "-" +shop_id;
                                 if (A.contains(B)) {
                                     jsonArray.add(FilteredList.get(i).getAsJsonObject());
                                 }
@@ -254,12 +283,19 @@ public class MainAdapter extends RecyclerView.Adapter <MainAdapter.ViewHolder> {
                             }
                         }
 
-                        if(amount==3){
+                        if(company_id !=0 && shop_id != 0 && department_id != 0){
                             while (i < FilteredList.size()) {
+                                JsonArray depart_id = FilteredList.get(i).getAsJsonObject().get("department_id").getAsJsonArray();
+                                int dept_id = 0;
+                                for (int j = 0; j < depart_id.size(); j++) {
+                                    if(depart_id.get(j).getAsInt()==department_id){
+                                        dept_id = depart_id.get(j).getAsInt();
+                                    }
+                                }
                                 String A = FilteredList.get(i).getAsJsonObject().get("company_id").getAsString()
                                         + "-" + FilteredList.get(i).getAsJsonObject().get("shop_id").getAsString()
-                                        + "-" + FilteredList.get(i).getAsJsonObject().get("departament_id").getAsString();
-                                String B = charSequence.toString();
+                                        + "-" + dept_id;
+                                String B = company_id + "-" +shop_id + "-" + department_id;
                                 if (A.contains(B)) {
                                     jsonArray.add(FilteredList.get(i).getAsJsonObject());
                                 }
@@ -270,6 +306,7 @@ public class MainAdapter extends RecyclerView.Adapter <MainAdapter.ViewHolder> {
                         results.values = jsonArray;
                         results.count = jsonArray.size();
                     }catch (Exception e){
+                        e.getMessage();
                         //Toast.makeText(activity.getApplicationContext(), "Handler.ShowSnack: \n"+e.getMessage(), Toast.LENGTH_LONG).show();
                     }
                 }

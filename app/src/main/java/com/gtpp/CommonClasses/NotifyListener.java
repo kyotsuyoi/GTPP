@@ -25,7 +25,6 @@ import okhttp3.WebSocketListener;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 
-@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class NotifyListener extends WebSocketListener {
 
     private Context context;
@@ -44,7 +43,6 @@ public class NotifyListener extends WebSocketListener {
         MainActivity.cardViewSession.setCardBackgroundColor(ContextCompat.getColor(context, R.color.colorGreen));
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
         super.onMessage(webSocket, text);
@@ -104,7 +102,6 @@ public class NotifyListener extends WebSocketListener {
         super.onClosed(webSocket, code, reason);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
         super.onFailure(webSocket, t, response);
@@ -116,16 +113,15 @@ public class NotifyListener extends WebSocketListener {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
     public void InstantiateWebSocket(NotifyListener notifyListener) {
         try {
             OkHttpClient client = new OkHttpClient();
             //Request request = new Request.Builder().url("ws://192.168.0.99:3333/server.php").build();
             Request request = new Request.Builder().url("ws://187.35.128.157:3333/server.php").build();
             webSocket = client.newWebSocket(request, notifyListener);
-        }catch (Exception e){
-            Notify("NotifyListener.InstantiateWebSocket", e.getMessage());
-            //Handler.ShowSnack("Houve um erro","MainActivity.InstantiateWebSocket: "+e.getMessage(), this, R_ID,true);
+        }catch (Throwable t){
+            Notify("NotifyListener.InstantiateWebSocket", t.getMessage());
+            //Handler.Snack("Houve um erro","MainActivity.InstantiateWebSocket: "+e.getMessage(), this, R_ID,true);
         }
     }
 
@@ -133,7 +129,6 @@ public class NotifyListener extends WebSocketListener {
         return webSocket;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
     private void Notify(String UserName, String Message) {
         try {
             String CHANNEL_ID = "MessageNotify";

@@ -74,7 +74,7 @@ public class TaskCheckUserAdapter extends RecyclerView.Adapter <TaskCheckUserAda
 
         }catch (Exception e){
             if(!isBindViewHolderError) {
-                Handler.ShowSnack("Houve um erro", "TaskCheckUserAdapter.onBindViewHolder: " + e.getMessage(), activity, R_ID, true);
+                Handler.ShowSnack("Houve um erro", "TaskCheckUserAdapter.onBindViewHolder: " + e.getMessage(), activity, R_ID);
                 isBindViewHolderError=true;
             }
         }
@@ -87,7 +87,7 @@ public class TaskCheckUserAdapter extends RecyclerView.Adapter <TaskCheckUserAda
             }
             return FilteredList.size();
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro", "TaskCheckUserAdapter.getItemCount: " + e.getMessage(), activity, R_ID, true);
+            Handler.ShowSnack("Houve um erro", "TaskCheckUserAdapter.getItemCount: " + e.getMessage(), activity, R_ID);
         }
         return 0;
     }
@@ -144,7 +144,7 @@ public class TaskCheckUserAdapter extends RecyclerView.Adapter <TaskCheckUserAda
                         }
                     }catch (Exception e){
                         if(!isBindViewHolderError) {
-                            Handler.ShowSnack("Houve um erro", "TaskCheckUserAdapter.GetEmployeePhoto.onResponse: " + e.getMessage(), activity, R_ID, true);
+                            Handler.ShowSnack("Houve um erro", "TaskCheckUserAdapter.GetEmployeePhoto.onResponse: " + e.getMessage(), activity, R_ID);
                             isBindViewHolderError=true;
                         }
                     }
@@ -153,7 +153,7 @@ public class TaskCheckUserAdapter extends RecyclerView.Adapter <TaskCheckUserAda
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
                     if(!isBindViewHolderError) {
-                        Handler.ShowSnack("Houve um erro", "TaskCheckUserAdapter.GetEmployeePhoto.onFailure: " + t.toString(), activity, R_ID, true);
+                        Handler.ShowSnack("Houve um erro", "TaskCheckUserAdapter.GetEmployeePhoto.onFailure: " + t.toString(), activity, R_ID);
                         isBindViewHolderError=true;
                     }
                 }
@@ -161,7 +161,7 @@ public class TaskCheckUserAdapter extends RecyclerView.Adapter <TaskCheckUserAda
 
         }catch (Exception e){
             if(!isBindViewHolderError) {
-                Handler.ShowSnack("Houve um erro", "TaskCheckUserAdapter.GetEmployeePhoto: " + e.getMessage(), activity, R_ID, true);
+                Handler.ShowSnack("Houve um erro", "TaskCheckUserAdapter.GetEmployeePhoto: " + e.getMessage(), activity, R_ID);
                 isBindViewHolderError=true;
             }
         }
@@ -208,19 +208,19 @@ public class TaskCheckUserAdapter extends RecyclerView.Adapter <TaskCheckUserAda
                             checkBox.setChecked(!checkBox.isChecked());
                         }
                     }catch (Exception e) {
-                        Handler.ShowSnack("Houve um erro","TaskCheckUserAdapter.PutUser.onResponse: " + e.getMessage(), activity, R_ID,true);
+                        Handler.ShowSnack("Houve um erro","TaskCheckUserAdapter.PutUser.onResponse: " + e.getMessage(), activity, R_ID);
                         checkBox.setChecked(!checkBox.isChecked());
                     }
                 }
 
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","TaskCheckUserAdapter.PutUser.onFailure: " + t.toString(), activity, R_ID,true);
+                    Handler.ShowSnack("Houve um erro","TaskCheckUserAdapter.PutUser.onFailure: " + t.toString(), activity, R_ID);
                     checkBox.setChecked(!checkBox.isChecked());
                 }
             });
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskCheckUserAdapter.PutUser: " + e.getMessage(), activity, R_ID,true);
+            Handler.ShowSnack("Houve um erro","TaskCheckUserAdapter.PutUser: " + e.getMessage(), activity, R_ID);
             checkBox.setChecked(!checkBox.isChecked());
         }
     }
@@ -253,7 +253,7 @@ public class TaskCheckUserAdapter extends RecyclerView.Adapter <TaskCheckUserAda
                         results.values = jsonArray;
                         results.count = jsonArray.size();
                     }catch (Exception e){
-                        Handler.ShowSnack("Houve um erro", "TaskCheckUserAdapter.getFilter: " + e.getMessage(), activity, R_ID, true);
+                        Handler.ShowSnack("Houve um erro", "TaskCheckUserAdapter.getFilter: " + e.getMessage(), activity, R_ID);
                     }
                 }
                 return results;

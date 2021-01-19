@@ -2,8 +2,6 @@ package com.gtpp.Login;
 
 import com.google.gson.JsonObject;
 
-import java.util.List;
-
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
@@ -12,10 +10,12 @@ import retrofit2.http.Query;
 
 public interface LoginInterface {
 
-    @GET("GTPP/AppVersion.php")
-    Call<JsonObject> GetAppVersion();
+    @GET("CCPP/AppVersion.php")
+    Call<JsonObject> GetAppVersion(
+            @Query("id") int id
+    );
 
-    @POST("Login.php?login")
+    @POST("CCPP/Login.php?login")
     Call<JsonObject> PostLogin(
             @Query("app_id") int app_id,
             @Body JsonObject jsonObject

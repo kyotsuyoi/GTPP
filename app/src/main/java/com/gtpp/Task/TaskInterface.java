@@ -17,8 +17,7 @@ public interface TaskInterface {
     Call<JsonObject> GetTask(
             @Query("app_id") int app_id,
             @Query("AUTH") String auth,
-            @Query("mobile") int mobile,
-            @Query("task_id") int task_id
+            @Query("id") int task_id
     );
 
     @POST("GTPP/TaskItem.php")
@@ -30,6 +29,20 @@ public interface TaskInterface {
 
     @PUT("GTPP/TaskItem.php")
     Call<JsonObject> PutTaskItem(
+            @Query("app_id") int app_id,
+            @Query("AUTH") String auth,
+            @Body JsonObject jsonObject
+    );
+
+    @PUT("GTPP/TaskItem.php")
+    Call<JsonObject> PutTaskItemOrder(
+            @Query("app_id") int app_id,
+            @Query("AUTH") String auth,
+            @Body JsonObject jsonObject
+    );
+
+    @PUT("GTPP/TaskItem.php")
+    Call<JsonObject> PutTaskItemYesNo(
             @Query("app_id") int app_id,
             @Query("AUTH") String auth,
             @Body JsonObject jsonObject
@@ -50,7 +63,7 @@ public interface TaskInterface {
             @Body JsonObject jsonObject
     );
 
-    @PUT("GTPP/Task.php")
+    @PUT("GTPP/TaskState.php")
     Call<JsonObject> PutDays(
             @Query("app_id") int app_id,
             @Query("AUTH") String auth,
@@ -72,7 +85,7 @@ public interface TaskInterface {
             @Body JsonObject jsonObject
     );
 
-    @POST("GTPP/TaskCompany.php")
+    @POST("GTPP/TaskComShoDepSub.php")
     Call<JsonObject> PostComShoDepSub(
             @Query("app_id") int app_id,
             @Query("AUTH") String auth,

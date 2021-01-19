@@ -12,19 +12,22 @@ public class AppService extends Service {
 
     private SavedUser SU = SavedUser.getSavedUser();
     private NotifyListener notifyListener;
-    @Nullable
+
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onCreate() {
-        super.onCreate();
-        SetWebSocket();
-        int NOTIFICATION_ID = (int) (System.currentTimeMillis()%10000);
-        this.startForeground(NOTIFICATION_ID,new Notification.Builder(this).build());
+        try {
+            super.onCreate();
+            SetWebSocket();
+            int NOTIFICATION_ID = (int) (System.currentTimeMillis() % 10000);
+            this.startForeground(NOTIFICATION_ID, new Notification.Builder(this).build());
+        }catch (Exception e){
+
+        }
     }
 
     @Override
@@ -32,7 +35,6 @@ public class AppService extends Service {
         return START_STICKY;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     private void SetWebSocket() {
         try {
             notifyListener = new NotifyListener(getApplicationContext(), SU);
@@ -42,7 +44,6 @@ public class AppService extends Service {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onDestroy() {
         notifyListener.getWebSocket().cancel();

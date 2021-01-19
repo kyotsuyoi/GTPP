@@ -77,8 +77,8 @@ public class MessageAdapter extends RecyclerView.Adapter <MessageAdapter.ViewHol
             viewHolder.progressBarUser.setVisibility(View.INVISIBLE);
 
             if (jsonObject.has("user_name")){
-                int MessageID = jsonObject.get("id").getAsInt();
-                int UserID = jsonObject.get("user_id").getAsInt();
+                //int MessageID = jsonObject.get("id").getAsInt();
+                //int UserID = jsonObject.get("user_id").getAsInt();
 
                 if(jsonObject.get("user_name").getAsString().equals(SU.getUser())){
                     viewHolder.textViewUserName.setText(jsonObject.get("user_name").getAsString() + "           ");
@@ -87,9 +87,9 @@ public class MessageAdapter extends RecyclerView.Adapter <MessageAdapter.ViewHol
 
                     FormatDateTime(jsonObject.get("date_time").getAsString(),viewHolder.textViewUserDateTime);
 
-                    if(jsonObject.get("image").getAsInt() > 0){
+                    /*if(jsonObject.get("image").getAsInt() > 0){
                         GetMessageImage(MessageID, UserID, viewHolder.imageViewUserPhoto,viewHolder.progressBarUser);
-                    }
+                    }*/
                 }else {
                     viewHolder.textViewName.setText(jsonObject.get("user_name").getAsString() + "           ");
                     viewHolder.textViewMessage.setText(jsonObject.get("description").getAsString());
@@ -97,21 +97,20 @@ public class MessageAdapter extends RecyclerView.Adapter <MessageAdapter.ViewHol
 
                     FormatDateTime(jsonObject.get("date_time").getAsString(),viewHolder.textViewDateTime);
 
-                    if(jsonObject.get("image").getAsInt() > 0){
+                    /*if(jsonObject.get("image").getAsInt() > 0){
                         GetMessageImage(MessageID, UserID, viewHolder.imageViewPhoto,viewHolder.progressBar);
-                    }
-
+                    }*/
                 }
 
             }else{
                 viewHolder.textViewName.setText("Sistema: ");
-                viewHolder.textViewMessage.setText(jsonObject.get("description").getAsString());
+                viewHolder.textViewMessage.setText(jsonObject.get("message").getAsString());
                 viewHolder.cardView.setVisibility(View.VISIBLE);
             }
 
         }catch (Exception e){
             if(!isBindViewHolderError) {
-                Handler.ShowSnack("Houve um erro", "MessageAdapter.onBindViewHolder: " + e.getMessage()+"\n"+position, activity, R_ID, true);
+                Handler.ShowSnack("Houve um erro", "MessageAdapter.onBindViewHolder: " + e.getMessage()+"\n"+position, activity, R_ID);
                 isBindViewHolderError=true;
             }
         }
@@ -217,7 +216,7 @@ public class MessageAdapter extends RecyclerView.Adapter <MessageAdapter.ViewHol
                                         .into(imageView);
                             }
                         }catch (Exception e){
-                            Handler.ShowSnack("Houve um erro","MessageAdapter.GetMessageImage.onResponse: " + e.getMessage(), activity, R_ID,true);
+                            Handler.ShowSnack("Houve um erro","MessageAdapter.GetMessageImage.onResponse: " + e.getMessage(), activity, R_ID);
                         }
                     }
                     progressBar.setVisibility(View.INVISIBLE);
@@ -225,12 +224,12 @@ public class MessageAdapter extends RecyclerView.Adapter <MessageAdapter.ViewHol
 
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","MessageAdapter.GetMessageImage.onFailure: " + t.toString(), activity, R_ID,true);
+                    Handler.ShowSnack("Houve um erro","MessageAdapter.GetMessageImage.onFailure: " + t.toString(), activity, R_ID);
                 }
             });
 
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","MessageAdapter.GetMessageImage: " + e.getMessage(), activity, R_ID,true);
+            Handler.ShowSnack("Houve um erro","MessageAdapter.GetMessageImage: " + e.getMessage(), activity, R_ID);
             progressBar.setVisibility(View.INVISIBLE);
         }
     }
@@ -255,7 +254,7 @@ public class MessageAdapter extends RecyclerView.Adapter <MessageAdapter.ViewHol
                 textView.setText(newDateString);
             }
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","MessageAdapter.FormatDateTime: " + e.getMessage(), activity, R_ID,true);
+            Handler.ShowSnack("Houve um erro","MessageAdapter.FormatDateTime: " + e.getMessage(), activity, R_ID);
         }
     }
 }

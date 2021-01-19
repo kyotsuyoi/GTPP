@@ -55,7 +55,7 @@ public class TaskHistoricAdapter extends RecyclerView.Adapter <TaskHistoricAdapt
             viewHolder.textViewDateTime.setText(List.get(position).getAsJsonObject().get("date_time").getAsString());
         }catch (Exception e){
             if(!isBindViewHolderError) {
-                Handler.ShowSnack("Houve um erro", "TaskHistoricAdapter.onBindViewHolder: " + e.getMessage(), activity, R_ID, true);
+                Handler.ShowSnack("Houve um erro", "TaskHistoricAdapter.onBindViewHolder: " + e.getMessage(), activity, R_ID);
                 isBindViewHolderError=true;
             }
         }

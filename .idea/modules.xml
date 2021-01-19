@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/GTPP.iml" filepath="$PROJECT_DIR$/.idea/GTPP.iml" group="GTPP" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/app.iml" group="GTPP/app" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/GTPP.iml" filepath="$PROJECT_DIR$/.idea/GTPP.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/GTPP.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/GTPP.app.iml" />
     </modules>
   </component>
 </project>

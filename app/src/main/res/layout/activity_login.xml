@@ -103,12 +103,21 @@
         android:id="@+id/imageView"
         android:layout_width="wrap_content"
         android:layout_height="65dp"
-        android:layout_marginBottom="16dp"
         android:contentDescription="TODO"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/activityLogin_TextViewInfo"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:srcCompat="@mipmap/logo"
         tools:ignore="MissingConstraints" />
+
+    <TextView
+        android:id="@+id/activityLogin_TextViewInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp"
+        android:text="App version"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </android.support.constraint.ConstraintLayout>

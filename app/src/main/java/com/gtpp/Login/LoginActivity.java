@@ -1,6 +1,5 @@
 package com.gtpp.Login;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -31,7 +30,9 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.TextView;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.gtpp.CommonClasses.ApiClient;
 import com.gtpp.CommonClasses.Handler;
@@ -56,17 +57,18 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private static final int REQUEST_STORAGE = 0;
     private static final String GTPP_PREFERENCES = "GTPP_PREFERENCES";
 
-    private SavedUser SU = new SavedUser();
+    private final SavedUser SU = new SavedUser();
     private AutoCompleteTextView mUserView;
     private EditText mPasswordView;
     private View mLoginFormView;
     private CheckBox check;
+    private TextView textViewInfo;
     private boolean saved;
-    private com.gtpp.CommonClasses.Handler Handler = new Handler();
-    private int R_ID = R.id.login_form;
-    private Activity This = LoginActivity.this;
+    private final com.gtpp.CommonClasses.Handler Handler = new Handler();
+    private final int R_ID = R.id.login_form;
+    private final Activity This = LoginActivity.this;
 
-    private LoginInterface loginInterface = ApiClient.getApiClient().create(LoginInterface.class);;
+    private final LoginInterface loginInterface = ApiClient.getApiClient().create(LoginInterface.class);
     private JsonObject systemVersion;
     private JsonObject login;
     private Call<JsonObject> systemVersionCall;
@@ -93,6 +95,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         mLoginFormView = findViewById(R.id.login_form);
         //progressBar = findViewById(R.id.login_progress);
         check = findViewById(R.id.login_check);
+        textViewInfo = findViewById(R.id.activityLogin_TextViewInfo);
 
         //Hide keyboard during check click
         check.setOnClickListener(v -> {
@@ -148,8 +151,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     "Houve um erro",
                     "LoginActivity.populateAutoComplete: "+e.getMessage(),
                     This,
-                    R_ID,
-                    true
+                    R_ID
             );
         }
     }
@@ -251,7 +253,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         return password.length() > 3;
     }
 
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
     private void ShowLoginForm(final boolean show) {
 
         int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
@@ -329,10 +330,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             }else{
                 Handler.ShowSnack(
                         "Falha na autenticação",
-                        "Não foi possível autenticar o usuário "+SU.getUser()+" que estava salvo localmente",
+                        "Não foi possível autenticar o usuário que estava salvo localmente",
                         This,
-                        R_ID,
-                        true
+                        R_ID
                 );
             }
 
@@ -341,8 +341,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     "Houve um erro",
                     "LoginActivity.Login: "+e.getMessage(),
                     This,
-                    R_ID,
-                    true
+                    R_ID
             );
         }
         ShowLoginForm(true);
@@ -363,8 +362,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     "Houve um erro",
                     "LoginActivity.LoadSavedSettings: "+e.getMessage(),
                     This,
-                    R_ID,
-                    true
+                    R_ID
             );
         }
     }
@@ -372,8 +370,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private void GetSystemVersion(){
         try {
             ShowLoginForm(false);
-            systemVersionCall = loginInterface.GetAppVersion();
-            Handler.ShowSnack("Aguarde por favor...",null,This,R_ID,false);
+            systemVersionCall = loginInterface.GetAppVersion(2);
+            Handler.ShowSnack("Aguarde por favor...",null,This,R_ID);
             systemVersionCall.enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
@@ -384,8 +382,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                             PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
                             String version = packageInfo.versionName;
 
-                            JsonObject data = systemVersion.get("data").getAsJsonObject();
-                            String SysVer= data.get("system_version").getAsString();
+                            JsonArray data = systemVersion.get("data").getAsJsonArray();
+                            String SysName = data.get(0).getAsJsonObject().get("description").getAsString();
+                            String SysVer = data.get(0).getAsJsonObject().get("version").getAsString();
+                            textViewInfo.setText(String.format("%s ver.%s Created by Kyo", SysName, SysVer));
 
                             if (!version.equalsIgnoreCase(SysVer)) {
                                 final android.app.AlertDialog.Builder builder = new AlertDialog.Builder(LoginActivity.this);
@@ -399,6 +399,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                                     PostLogin(SU.getUser(),SU.getPassword(),SU.getSession());
                                 }else{
                                     ShowLoginForm(true);
+                                    Handler.ShowSnack("Entre com login e senha",null,This,R_ID);
                                 }
                             }
                         }
@@ -408,8 +409,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                                 "Houve um erro",
                                 "LoginActivity.SelectSystemVersion.onResponse: "+e.toString(),
                                 This,
-                                R_ID,
-                                true
+                                R_ID
                         );
                     }
                 }
@@ -420,11 +420,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                             "Houve um erro",
                             "LoginActivity.SelectSystemVersion.onFailure: "+t.toString(),
                             This,
-                            R_ID,
-                            true
+                            R_ID
                     );
-
-                    ShowLoginForm(true);
                 }
             });
 
@@ -433,10 +430,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     "Houve um erro",
                     "LoginActivity.SelectSystemVersion: "+e.getMessage(),
                     This,
-                    R_ID,
-                    true
+                    R_ID
             );
-            ShowLoginForm(true);
         }
     }
 
@@ -461,11 +456,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                             String session = data.get("session").getAsString();
                             int administrator = data.get("administrator").getAsInt();
                             boolean isAdministrator;
-                            if (administrator == 0) {
-                                isAdministrator = false;
-                            } else {
-                                isAdministrator = true;
-                            }
+                            isAdministrator = administrator != 0;
                             Login(id, user, password, session, isAdministrator);
                         } else {
                             ShowLoginForm(true);
@@ -475,8 +466,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                                 "Houve um erro",
                                 "LoginActivity.SelectLogin.onResponse: "+e.toString(),
                                 This,
-                                R_ID,
-                                true
+                                R_ID
                         );
                         ShowLoginForm(true);
                     }
@@ -488,8 +478,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                             "Houve um erro",
                             "LoginActivity.SelectLogin.onFailure: "+t.toString(),
                             This,
-                            R_ID,
-                            true
+                            R_ID
                     );
                     ShowLoginForm(true);
                 }
@@ -499,8 +488,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     "Houve um erro",
                     "LoginActivity.SelectLogin: "+e.getMessage(),
                     This,
-                    R_ID,
-                    true
+                    R_ID
             );
             ShowLoginForm(true);
         }

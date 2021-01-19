@@ -1,13 +1,15 @@
 package com.gtpp.Task;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
-import android.os.Parcelable;
 import android.support.annotation.RequiresApi;
+import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TextInputEditText;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -20,34 +22,26 @@ import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ProgressBar;
 import android.widget.SearchView;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
 import com.gtpp.CommonClasses.ApiClient;
 import com.gtpp.CommonClasses.Handler;
-import com.gtpp.CommonClasses.NotifyListener;
 import com.gtpp.CommonClasses.RecyclerItemClickListener;
 import com.gtpp.CommonClasses.SavedUser;
-import com.gtpp.CommonClasses.UtilsInterface;
-import com.gtpp.Main.MainActivity;
 import com.gtpp.Main.MainInterface;
 import com.gtpp.Message.MessageActivity;
 import com.gtpp.R;
 
-import java.util.ArrayList;
-import java.util.EventListener;
 import java.util.Objects;
 
-import okhttp3.WebSocket;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -57,10 +51,10 @@ import static com.gtpp.CommonClasses.Handler.getAppID;
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class TaskActivity extends AppCompatActivity {
 
-    private int R_ID = R.id.activityTask_ButtonPriority;
+    private final int R_ID = R.id.activityTask_ButtonPriority;
     private Activity This = TaskActivity.this;
     private SavedUser SU;
-    private com.gtpp.CommonClasses.Handler Handler= new Handler();
+    private final com.gtpp.CommonClasses.Handler Handler= new Handler();
     private Intent intent;
     private TextView TaskDescription, TaskFullDescription, Exclamation, TextViewPercent, TextViewMessage, TextViewDates;
     private JsonObject TaskObject;
@@ -84,9 +78,14 @@ public class TaskActivity extends AppCompatActivity {
 
     private ProgressBar progressBar;
 
-    private MainInterface mainInterface = ApiClient.getApiClient().create(MainInterface.class);
-    private TaskInterface taskInterface = ApiClient.getApiClient().create(TaskInterface.class);
-    private UtilsInterface utilsInterface = ApiClient.getApiClient().create(UtilsInterface.class);
+    private final MainInterface mainInterface = ApiClient.getApiClient().create(MainInterface.class);
+    private final TaskInterface taskInterface = ApiClient.getApiClient().create(TaskInterface.class);
+
+    private ConstraintLayout constraintLayoutOrder;
+    private FloatingActionButton floatingActionButtonUp, floatingActionButtonDown, floatingActionButtonConfirm;
+    private int SelectedItem = 0, constraintLayoutOrderWidth;
+
+    private JsonArray stateList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,6 +120,15 @@ public class TaskActivity extends AppCompatActivity {
         cardViewDepartment = findViewById(R.id.activityTask_CardViewDepartment);
         cardViewSubDepartment= findViewById(R.id.activityTask_CardViewSubDepartment);
 
+        constraintLayoutOrder = findViewById(R.id.ConstraintLayout_Order);
+        constraintLayoutOrder.setAlpha(0);
+        constraintLayoutOrder.setEnabled(false);
+        constraintLayoutOrderWidth = constraintLayoutOrder.getMaxWidth();
+        constraintLayoutOrder.setMaxWidth(0);
+        floatingActionButtonUp = findViewById(R.id.floatingActionButton_Up);
+        floatingActionButtonDown = findViewById(R.id.floatingActionButton_Down);
+        floatingActionButtonConfirm = findViewById(R.id.floatingActionButton_Confirm);
+
         cardViewShop.setVisibility(View.INVISIBLE);
         cardViewDepartment.setVisibility(View.INVISIBLE);
         cardViewSubDepartment.setVisibility(View.INVISIBLE);
@@ -139,9 +147,13 @@ public class TaskActivity extends AppCompatActivity {
 
         taskPosition = intent.getIntExtra("position",0);
 
-        TaskObject = new JsonParser().parse(
-                intent.getStringExtra("task_object")).getAsJsonObject();
+        TaskObject = new JsonParser().parse(Objects.requireNonNull(
+                intent.getStringExtra("task_object"))).getAsJsonObject();
+
         TaskDescription.setText(TaskObject.get("description").getAsString());
+
+        stateList = new JsonParser().parse(Objects.requireNonNull(
+                intent.getStringExtra("state_list"))).getAsJsonArray();
 
         String InitialDate = TaskObject.get("initial_date").getAsString();
         InitialDate = InitialDate.substring(8, 10) + "/"
@@ -153,9 +165,12 @@ public class TaskActivity extends AppCompatActivity {
                 + FinalDate.substring(5, 7) + "/"
                 + FinalDate.substring(0, 4);
 
-        TextViewDates.setText(
-                "Iniciou em " + InitialDate + "\nTermina em " + FinalDate
-        );
+        String percent = TaskObject.get("percent").getAsString()+"%";
+        TextViewPercent.setText(percent);
+        progressBar.setProgress(TaskObject.get("percent").getAsInt(),true);
+
+        String dates = "Iniciou em " + InitialDate + "\nTermina em " + FinalDate;
+        TextViewDates.setText(dates);
 
         SetAlpha();
         SetButtonState();
@@ -174,119 +189,6 @@ public class TaskActivity extends AppCompatActivity {
         setResult(RESULT_OK,intent);
 
         this.finish();
-    }
-
-    private void GetTask(){
-        try {
-            Call<JsonObject> call = taskInterface.GetTask(getAppID(), SU.getSession(),1,TaskObject.get("id").getAsInt());
-            call.enqueue(new Callback<JsonObject>() {
-                @RequiresApi(api = Build.VERSION_CODES.N)
-                @Override
-                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
-                    try {
-                        if (!Handler.isRequestError(response,This,R_ID)){
-                            JsonObject jsonObject = response.body();
-                            JsonObject data = jsonObject.get("data").getAsJsonObject();
-                            if(data.get("csds") != JsonNull.INSTANCE){
-                                jsonArrayCSDS = data.get("csds").getAsJsonArray();
-                            }else{
-                                jsonArrayCSDS = new JsonArray();
-                            }
-                            SetCSDS_Description();
-                            if(data.get("full_description") != JsonNull.INSTANCE) {
-                                TaskFullDescription.setText(data.get("full_description").getAsString());
-                            }else{
-                                TaskFullDescription.setText("Sem descrição");
-                            }
-                            TextViewPercent.setText(data.get("percent").getAsString()+"%");
-                            progressBar.setProgress(data.get("percent").getAsInt(),true);
-
-                            boolean Lock = TaskObject.get("state_id").getAsInt() == 4 || TaskObject.get("state_id").getAsInt() == 5
-                                    || TaskObject.get("state_id").getAsInt() == 6 || TaskObject.get("state_id").getAsInt() == 7
-                                    /*|| TaskObject.get("user_id").getAsInt() != SU.getId() && !SU.isAdministrator()*/;
-
-                            if(data.get("task_item") != JsonNull.INSTANCE){
-                                JsonArray CheckListArray = data.get("task_item").getAsJsonArray();
-                                if(Lock){
-                                    taskItemAdapter = new TaskItemAdapter(
-                                            CheckListArray,
-                                            TaskActivity.this,taskInterface,
-                                            SU,
-                                            R_ID,
-                                            TextViewPercent,
-                                            progressBar,
-                                            buttonState,
-                                            TaskObject,
-                                            recyclerViewChecklist,
-                                            true
-                                    );
-                                }else{
-                                    taskItemAdapter = new TaskItemAdapter(
-                                            CheckListArray,
-                                            TaskActivity.this,taskInterface,
-                                            SU,
-                                            R_ID,
-                                            TextViewPercent,
-                                            progressBar,
-                                            buttonState,
-                                            TaskObject,
-                                            recyclerViewChecklist,
-                                            false
-                                    );
-                                }
-
-                                recyclerViewChecklist.setAdapter(taskItemAdapter);
-                                recyclerViewChecklist.smoothScrollToPosition(taskItemAdapter.getItemCount());
-                            }
-
-                            JsonArray UserArray = new JsonArray();
-                            JsonObject FirstUserObject = new JsonObject();
-                            FirstUserObject.addProperty("user_id",TaskObject.get("user_id").getAsInt());
-                            FirstUserObject.addProperty("task_id",TaskObject.get("id").getAsInt());
-                            FirstUserObject.addProperty("status",true);
-                            UserArray.add(FirstUserObject);
-
-                            if(data.get("task_user") != JsonNull.INSTANCE){
-                                for (int i = 0; i < data.get("task_user").getAsJsonArray().size(); i++) {
-                                    JsonObject object =  data.get("task_user").getAsJsonArray().get(i).getAsJsonObject();
-                                    UserArray.add(object);
-                                }
-                            }
-
-                            if (Lock) {
-                                taskGuestAdapter = new TaskGuestAdapter(
-                                        UserArray,
-                                        TaskActivity.this,
-                                        SU.getSession(),
-                                        R_ID,
-                                        true
-                                );
-                            }else{
-                                taskGuestAdapter = new TaskGuestAdapter(
-                                        UserArray,
-                                        TaskActivity.this,
-                                        SU.getSession(),
-                                        R_ID,
-                                        false
-                                );
-                            }
-
-                            recyclerViewGuest.setAdapter(taskGuestAdapter);
-                        }
-                    }catch (Exception e){
-                        Handler.ShowSnack("Houve um erro","TaskActivity.GetTask.onResponse: " + e.getMessage(), This, R_ID,true);
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","TaskActivity.GetTask.onFailure: " + t.toString(), This, R_ID,true);
-                }
-            });
-
-        }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskActivity.GetTask: " + e.getMessage(), This, R_ID,true);
-        }
     }
 
     private void SetAlpha(){
@@ -368,94 +270,6 @@ public class TaskActivity extends AppCompatActivity {
                 break;
         }
         Priority.startAnimation(PriorityAnimation);
-    }
-
-    private void PostItem(){
-        try {
-            JsonObject ItemObject = new JsonObject();
-            ItemObject.addProperty("description",textInputEditTextItem.getText().toString());
-            ItemObject.addProperty("task_id",TaskObject.get("id").getAsInt());
-            Call<JsonObject> call = taskInterface.PostTaskItem(getAppID(), SU.getSession(),ItemObject);
-            call.enqueue(new Callback<JsonObject>() {
-                @RequiresApi(api = Build.VERSION_CODES.N)
-                @Override
-                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
-                    try {
-                        if (!Handler.isRequestError(response,This,R_ID)){
-                            JsonObject jsonObject = response.body();
-                            int ID = jsonObject.get("last_id").getAsInt();
-                            TextViewPercent.setText(jsonObject.get("percent").getAsString()+"%");
-                            progressBar.setProgress(jsonObject.get("percent").getAsInt(),true);
-
-                            ItemObject.addProperty("check",false);
-                            ItemObject.addProperty("id",ID);
-
-                            int StateID = jsonObject.get("state_id").getAsInt();
-                            String StateDescription = jsonObject.get("state_description").getAsString();
-                            String StateColor = "#"+jsonObject.get("state_color").getAsString();
-                            buttonState.setText(StateDescription);
-                            buttonState.setBackgroundColor(Color.parseColor(StateColor));
-                            TaskObject.addProperty("state_id", StateID);
-
-                            boolean Lock = TaskObject.get("state_id").getAsInt() == 4 || TaskObject.get("state_id").getAsInt() == 5
-                                    || TaskObject.get("state_id").getAsInt() == 6 || TaskObject.get("state_id").getAsInt() == 7
-                                    || TaskObject.get("user_id").getAsInt() != SU.getId() && !SU.isAdministrator();
-
-                            if(taskItemAdapter == null){
-                                JsonArray CheckListArray = new JsonArray();
-                                CheckListArray.add(ItemObject);
-                                if(Lock){
-                                    taskItemAdapter = new TaskItemAdapter(
-                                            CheckListArray,
-                                            TaskActivity.this,taskInterface,
-                                            SU,
-                                            R_ID,
-                                            TextViewPercent,
-                                            progressBar,
-                                            buttonState,
-                                            TaskObject,
-                                            recyclerViewChecklist,
-                                            true
-                                    );
-                                }else{
-                                    taskItemAdapter = new TaskItemAdapter(
-                                            CheckListArray,
-                                            TaskActivity.this,taskInterface,
-                                            SU,
-                                            R_ID,
-                                            TextViewPercent,
-                                            progressBar,
-                                            buttonState,
-                                            TaskObject,
-                                            recyclerViewChecklist,
-                                            false
-                                    );
-                                }
-                                recyclerViewChecklist.setAdapter(taskItemAdapter);
-                            }else{
-                                taskItemAdapter.setNewItem(ItemObject);
-                                taskItemAdapter.notifyItemInserted(taskItemAdapter.getItemCount());
-                            }
-
-                            recyclerViewChecklist.smoothScrollToPosition(taskItemAdapter.getItemCount());
-
-                            textInputEditTextItem.setText("");
-                            hideKeyboard(This,textInputEditTextItem);
-                        }
-                    }catch (Exception e){
-                        Handler.ShowSnack("Houve um erro","TaskActivity.PostItem.onResponse: " + e.getMessage(), This, R_ID,true);
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","TaskActivity.PostItem.onFailure: " + t.toString(), This, R_ID,true);
-                }
-            });
-
-        }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskActivity.PostItem: " + e.getMessage(), This, R_ID,true);
-        }
     }
 
     private void SetCSDS_Description(){
@@ -558,30 +372,35 @@ public class TaskActivity extends AppCompatActivity {
         });*/
 
             buttonMessage.setOnClickListener(v -> {
-                Message();
+                IntentMessage();
             });
 
             buttonHistoric.setOnClickListener(v -> {
                 DialogHistoric();
             });
+
+            floatingActionButtonConfirm.setOnClickListener(v->{
+                constraintLayoutOrder.setAlpha(0);
+                constraintLayoutOrder.setEnabled(false);
+                constraintLayoutOrder.setMaxWidth(0);
+            });
+
+            floatingActionButtonDown.setOnClickListener(v->{
+                if(SelectedItem >=  taskItemAdapter.getItemCount()-1){
+                    return;
+                }
+                PutTaskItemOrder(taskItemAdapter.getItemID(SelectedItem),"next");
+            });
+
+            floatingActionButtonUp.setOnClickListener(v->{
+                if(SelectedItem <=  0){
+                    return;
+                }
+                PutTaskItemOrder(taskItemAdapter.getItemID(SelectedItem),"previous");
+            });
+
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskActivity.SetButton: " + e.getMessage(), This, R_ID,true);
-        }
-    }
-
-    public void Message(){
-        Intent intent = new Intent(this, MessageActivity.class);
-        intent.putExtra("task_id", TaskObject.get("id").getAsInt());
-        intent.putExtra("task_description", TaskObject.get("description").getAsString());
-        startActivity(intent);
-    }
-
-    public static void hideKeyboard(Context context, View view) {
-        try {
-            InputMethodManager keyboard = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-            keyboard.hideSoftInputFromWindow(view.getWindowToken(), 0);
-        } catch (Exception e) {
-            e.printStackTrace();
+            Handler.ShowSnack("Houve um erro","TaskActivity.SetButton: " + e.getMessage(), This, R_ID);
         }
     }
 
@@ -600,19 +419,11 @@ public class TaskActivity extends AppCompatActivity {
                 try {
                     int StateID = TaskObject.get("state_id").getAsInt();
 
-                    if (TaskObject.get("user_id").getAsInt() != SU.getId() && !SU.isAdministrator()){
-                        Handler.ShowSnack("Você não pode fazer isso",
-                                "Somente o criador ou administradores podem mudar o estado atual da tarefa, caso precise mudar algo entre em contato com seu administrador",
-                                This,
-                                R_ID,
-                                true
-                        );
-                        return;
-                    }
-
                     if (StateID == 1 || StateID == 2) {
                         alert.setMessage("Deseja mudar o estado da tarefa para PARADO?");
-                        alert.setPositiveButton("Alterar", (dialog, which) -> DialogStateChangeReason(4));
+                        JsonObject jsonObject = new JsonObject();
+                        jsonObject.addProperty("task_id",TaskObject.get("id").getAsInt());
+                        alert.setPositiveButton("Parar", (dialog, which) -> DialogStateChangeReason(jsonObject));
                         alert.create();
                         alert.show();
                         return;
@@ -620,7 +431,9 @@ public class TaskActivity extends AppCompatActivity {
 
                     if (StateID == 3) {
                         alert.setMessage("Deseja mudar o estado da tarefa para FINALIZADO?");
-                        alert.setPositiveButton("Alterar", (dialog, which) -> PutTaskState(6, "Tarefa finalizada"));
+                        JsonObject jsonObject = new JsonObject();
+                        jsonObject.addProperty("task_id",TaskObject.get("id").getAsInt());
+                        alert.setPositiveButton("Finalizar", (dialog, which) -> PutTaskState(jsonObject));
                         alert.create();
                         alert.show();
                         return;
@@ -628,11 +441,9 @@ public class TaskActivity extends AppCompatActivity {
 
                     if (StateID == 4) {
                         alert.setMessage("Deseja retomar esta tarefa?");
-                        if(TextViewPercent.getText().toString().equals("0%")){
-                            alert.setPositiveButton("Retomar", (dialog, which) -> DialogStateChangeReason(1));
-                        }else {
-                            alert.setPositiveButton("Retomar", (dialog, which) -> DialogStateChangeReason(2));
-                        }
+                        JsonObject jsonObject = new JsonObject();
+                        jsonObject.addProperty("task_id",TaskObject.get("id").getAsInt());
+                        alert.setPositiveButton("Retomar", (dialog, which) -> PutTaskState(jsonObject));
                         alert.create();
                         alert.show();
                         return;
@@ -645,18 +456,14 @@ public class TaskActivity extends AppCompatActivity {
 
                     if (StateID == 6) {
                         alert.setMessage("Deseja remotar esta tarefa que estava finalizada?");
-                        if(TextViewPercent.getText().toString().equals("0%")){
-                            alert.setPositiveButton("Retomar", (dialog, which) -> DialogStateChangeReason(1));
-                        }else if(TextViewPercent.getText().toString().equals("100%")) {
-                            alert.setPositiveButton("Retomar", (dialog, which) -> DialogStateChangeReason(3));
-                        }else{
-                            alert.setPositiveButton("Retomar", (dialog, which) -> DialogStateChangeReason(2));
-                        }
+                        JsonObject jsonObject = new JsonObject();
+                        jsonObject.addProperty("task_id",TaskObject.get("id").getAsInt());
+                        alert.setPositiveButton("Retomar", (dialog, which) -> DialogStateChangeReason(jsonObject));
                         alert.create();
                         alert.show();
                     }
                 }catch (Exception e){
-                    Handler.ShowSnack("Houve um erro","SetButtonState.setOnClickListener: " + e.getMessage(), This, R_ID,true);
+                    Handler.ShowSnack("Houve um erro","SetButtonState.setOnClickListener: " + e.getMessage(), This, R_ID);
                 }
             });
 
@@ -664,25 +471,390 @@ public class TaskActivity extends AppCompatActivity {
                 try{
                     int StateID = TaskObject.get("state_id").getAsInt();
 
-                    if(StateID==7){
-                        alert.setMessage("Deseja retomar esta tarefa? Ela voltará como uma tarefa bloqueada");
-                        alert.setPositiveButton("SIM", (dialog, which) -> DialogStateChangeReason(5));
-                    }else if(StateID==6) {
-                        return false;
+                    if(StateID == 6) return false;
+
+                    JsonObject jsonObject = new JsonObject();
+                    jsonObject.addProperty("task_id",TaskObject.get("id").getAsInt());
+                    jsonObject.addProperty("cancel",1);
+
+                    if(StateID != 7){
+                        alert.setMessage("Deseja cancelar esta tarefa?");
+                        alert.setPositiveButton("Cancelar", (dialog, which) -> DialogStateChangeReason(jsonObject));
                     }else{
-                        alert.setMessage("Deseja CANCELAR esta tarefa?");
-                        alert.setPositiveButton("SIM", (dialog, which) -> DialogStateChangeReason(7));
+                        alert.setMessage("Deseja restaurar esta tarefa? Ela voltará como uma tarefa bloqueada");
+                        alert.setPositiveButton("Restaurar", (dialog, which) -> DialogStateChangeReason(jsonObject));
                     }
-                    alert.setNeutralButton("NÃO", (dialog, which) -> dialog.cancel());
                     alert.create();
                     alert.show();
+
                 }catch (Exception e){
-                    Handler.ShowSnack("Houve um erro","SetButtonState.setOnLongClickListener: " + e.getMessage(), This, R_ID,true);
+                    Handler.ShowSnack("Houve um erro","SetButtonState.setOnLongClickListener: " + e.getMessage(), This, R_ID);
                 }
                 return true;
             });
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","SetButtonState: " + e.getMessage(), This, R_ID,true);
+            Handler.ShowSnack("Houve um erro","SetButtonState: " + e.getMessage(), This, R_ID);
+        }
+    }
+
+    private void SetRecyclerView(){
+        recyclerViewChecklist.addOnItemTouchListener(new RecyclerItemClickListener(
+                this, recyclerViewChecklist, new RecyclerItemClickListener.OnItemClickListener() {
+
+            public void onItemClick(View view, int position) {}
+
+            public boolean onLongItemClick(View view, final int position) {
+                try{
+                    /*if (TaskObject.get("user_id").getAsInt() != SU.getId() || !SU.isAdministrator()){
+                        Handler.ShowSnack("Você não pode fazer isso",
+                                "Somente o criador ou administradores podem alterar os itens desta tarefa, caso precise mudar algo entre em contato com seu administrador",
+                                This,
+                                R_ID,
+                                true
+                        );
+                        return false;
+                    }*/
+
+                    final int ID = taskItemAdapter.getItemID(position);
+                    SelectedItem = position;
+
+                    DialogPutDescription = new Dialog(This,R.style.Theme_AppCompat_Dialog_MinWidth);
+                    DialogPutDescription.setContentView(R.layout.dialog_put_description);
+
+                    TextInputEditText textInputEditText = DialogPutDescription.findViewById(R.id.dialogPutDescription_TextInputEditText);
+                    Button buttonOK = DialogPutDescription.findViewById(R.id.dialogPutDescription_ButtonOk);
+                    Button buttonCancel = DialogPutDescription.findViewById(R.id.dialogPutDescription_ButtonCancel);
+                    Button buttonOrder = DialogPutDescription.findViewById(R.id.dialogPutDescription_ButtonOrder);
+                    CheckBox checkBox = DialogPutDescription.findViewById(R.id.dialogPutDescription_CheckBox);
+
+                    textInputEditText.setText(taskItemAdapter.getItemDescription(position));
+                    textInputEditText.requestFocus();
+
+                    if(taskItemAdapter.getItem(position).get("yes_no").getAsInt() != 0){
+                        checkBox.setChecked(true);
+                    }else{
+                        checkBox.setChecked(false);
+                    }
+
+                    buttonOK.setOnClickListener(v ->{
+                        if(textInputEditText.getText().length() < 1){
+                            textInputEditText.setError("Digite a descrição");
+                            textInputEditText.requestFocus();
+                            return;
+                        }
+                        PutItemDescription(textInputEditText.getText().toString(),position, view);
+                        DialogPutDescription.cancel();
+                    });
+
+                    buttonCancel.setOnClickListener(v -> {
+                        DialogPutDescription.cancel();
+                    });
+
+                    buttonOrder.setOnClickListener(v -> {
+                        constraintLayoutOrder.setAlpha(1f);
+                        constraintLayoutOrder.setEnabled(true);
+                        constraintLayoutOrder.setMaxWidth(constraintLayoutOrderWidth);
+                        DialogPutDescription.cancel();
+                    });
+
+                    checkBox.setOnClickListener(v->{
+                        int YesNo = 0;
+                        if(checkBox.isChecked()){
+                            YesNo = -1;
+                        }
+                        DialogPutDescription.cancel();
+                        PutTaskItemYesNoOnDialog(position,YesNo);
+                    });
+
+                    DialogPutDescription.show();
+
+                }catch (Exception e){
+                    Handler.ShowSnack("Houve um erro","TaskActivity.SetRecyclerView.onLongItemClick: " + e.getMessage(), This, R_ID);
+                }
+
+                return false;
+            }
+        }));
+    }
+
+    private void SetComShoDepSubRecyclerView(RecyclerView recyclerView, int Type){
+        recyclerView.addOnItemTouchListener(new RecyclerItemClickListener(
+                this, recyclerView, new RecyclerItemClickListener.OnItemClickListener() {
+
+            public void onItemClick(View view, int position) {
+                switch (Type){
+                    case 1:
+                        buttonCompany.setText(taskComShoDepSubAdapter.getItem(position).get("description").getAsString());
+                        cardViewCompany.setAlpha(1F);
+                        cardViewShop.setVisibility(View.VISIBLE);
+                        cardViewShop.setAlpha(0.5F);
+                        buttonShop.setText("LOJA");
+                        TaskObject.addProperty("company_id", taskComShoDepSubAdapter.getItem(position).get("id").getAsInt());
+                        DialogComShoDepSub.cancel();
+                        break;
+                    case 2:
+                        buttonShop.setText(taskComShoDepSubAdapter.getItem(position).get("description").getAsString());
+                        cardViewShop.setAlpha(1F);
+                        cardViewDepartment.setVisibility(View.VISIBLE);
+                        cardViewDepartment.setAlpha(0.5F);
+                        buttonDepartment.setText("DEPART");
+                        TaskObject.addProperty("shop_id", taskComShoDepSubAdapter.getItem(position).get("id").getAsInt());
+                        DialogComShoDepSub.cancel();
+                        break;
+                    case 3:
+                        /*
+                        buttonDepartment.setText(taskComShoDepSubAdapter.getItem(position).get("description").getAsString());
+                        cardViewDepartment.setAlpha(1F);
+                        TaskObject.addProperty("department_id", taskComShoDepSubAdapter.getItem(position).get("id").getAsInt());
+*/
+                        break;
+                }
+            }
+
+            public boolean onLongItemClick(View view, final int position) { return false; }
+        }));
+    }
+
+    private void GetTask(){
+        try {
+            Call<JsonObject> call = taskInterface.GetTask(getAppID(), SU.getSession(), TaskObject.get("id").getAsInt());
+            call.enqueue(new Callback<JsonObject>() {
+                @SuppressLint("SetTextI18n")
+                @RequiresApi(api = Build.VERSION_CODES.N)
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                    try {
+                        if (!Handler.isRequestError(response,This,R_ID)){
+                            JsonObject jsonObject = response.body();
+                            assert jsonObject != null;
+                            JsonObject data = jsonObject.get("data").getAsJsonObject();
+                            if(data.get("csds") != JsonNull.INSTANCE){
+                                jsonArrayCSDS = data.get("csds").getAsJsonArray();
+                            }else{
+                                jsonArrayCSDS = new JsonArray();
+                            }
+                            SetCSDS_Description();
+                            if(data.get("full_description") != JsonNull.INSTANCE) {
+                                TaskFullDescription.setText(data.get("full_description").getAsString());
+                            }else{
+                                TaskFullDescription.setText("Sem descrição");
+                            }
+                            //TextViewPercent.setText(data.get("percent").getAsString()+"%");
+                            //progressBar.setProgress(data.get("percent").getAsInt(),true);
+
+                            boolean Lock = TaskObject.get("state_id").getAsInt() == 4 || TaskObject.get("state_id").getAsInt() == 5
+                                    || TaskObject.get("state_id").getAsInt() == 6 || TaskObject.get("state_id").getAsInt() == 7
+                                    /*|| TaskObject.get("user_id").getAsInt() != SU.getId() && !SU.isAdministrator()*/;
+
+                            if(data.get("task_item") != JsonNull.INSTANCE){
+                                JsonArray CheckListArray = data.get("task_item").getAsJsonArray();
+                                taskItemAdapter = new TaskItemAdapter(
+                                        CheckListArray,
+                                        TaskActivity.this,taskInterface,
+                                        SU,
+                                        R_ID,
+                                        TextViewPercent,
+                                        progressBar,
+                                        buttonState,
+                                        TaskObject,
+                                        recyclerViewChecklist,
+                                        stateList,
+                                        Lock
+                                );
+
+                                recyclerViewChecklist.setAdapter(taskItemAdapter);
+                                recyclerViewChecklist.smoothScrollToPosition(taskItemAdapter.getItemCount());
+                            }
+
+                            JsonArray UserArray = new JsonArray();
+                            JsonObject FirstUserObject = new JsonObject();
+                            FirstUserObject.addProperty("user_id",TaskObject.get("user_id").getAsInt());
+                            FirstUserObject.addProperty("task_id",TaskObject.get("id").getAsInt());
+                            FirstUserObject.addProperty("status",true);
+                            UserArray.add(FirstUserObject);
+
+                            if(data.get("task_user") != JsonNull.INSTANCE){
+                                for (int i = 0; i < data.get("task_user").getAsJsonArray().size(); i++) {
+                                    JsonObject object =  data.get("task_user").getAsJsonArray().get(i).getAsJsonObject();
+                                    UserArray.add(object);
+                                }
+                            }
+
+                            if (Lock) {
+                                taskGuestAdapter = new TaskGuestAdapter(
+                                        UserArray,
+                                        TaskActivity.this,
+                                        SU.getSession(),
+                                        R_ID,
+                                        true
+                                );
+                            }else{
+                                taskGuestAdapter = new TaskGuestAdapter(
+                                        UserArray,
+                                        TaskActivity.this,
+                                        SU.getSession(),
+                                        R_ID,
+                                        false
+                                );
+                            }
+
+                            recyclerViewGuest.setAdapter(taskGuestAdapter);
+                        }
+                    }catch (Exception e){
+                        Handler.ShowSnack("Houve um erro","TaskActivity.GetTask.onResponse: " + e.getMessage(), This, R_ID);
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                    Handler.ShowSnack("Houve um erro","TaskActivity.GetTask.onFailure: " + t.toString(), This, R_ID);
+                }
+            });
+
+        }catch (Exception e){
+            Handler.ShowSnack("Houve um erro","TaskActivity.GetTask: " + e.getMessage(), This, R_ID);
+        }
+    }
+
+    private void GetTaskUser(RecyclerView recyclerView){
+        try {
+            Call<JsonObject> call = taskInterface.GetTaskUser(getAppID(), SU.getSession(),1, TaskObject.get("id").getAsInt());
+            call.enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                    try {
+                        if (!Handler.isRequestError(response,This,R_ID)){
+                            JsonObject jsonObject = response.body();
+                            assert jsonObject != null;
+                            JsonArray data = jsonObject.get("data").getAsJsonArray();
+
+                            taskCheckUserAdapter = new TaskCheckUserAdapter(
+                                    data,
+                                    TaskActivity.this,taskInterface,
+                                    SU.getSession(),
+                                    R_ID,
+                                    TaskObject.get("id").getAsInt(),
+                                    taskGuestAdapter
+                            );
+                            recyclerView.setAdapter(taskCheckUserAdapter);
+                        }
+                    }catch (Exception e){
+                        Handler.ShowSnack("Houve um erro","TaskActivity.GetTaskUser.onResponse: " + e.getMessage(), This, R_ID);
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                    Handler.ShowSnack("Houve um erro","TaskActivity.GetTaskUser.onFailure: " + t.toString(), This, R_ID);
+                }
+            });
+
+        }catch (Exception e){
+            Handler.ShowSnack("Houve um erro","TaskActivity.GetTaskUser: " + e.getMessage(), This, R_ID);
+        }
+    }
+
+    private void GetCompany(RecyclerView recyclerView){
+        try {
+            Call<JsonObject> call = mainInterface.GetCompany(getAppID(), SU.getSession());
+            call.enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                    try {
+                        if (!Handler.isRequestError(response, This, R_ID)) {
+                            JsonObject jsonObject = response.body();
+                            JsonArray companyList = jsonObject.get("data").getAsJsonArray();
+
+                            taskComShoDepSubAdapter = new TaskComShoDepSubAdapter(companyList, TaskActivity.this, SU.getSession(), R_ID, TaskObject, null);
+                            recyclerView.setAdapter(taskComShoDepSubAdapter);
+
+                            SetComShoDepSubRecyclerView(recyclerView, 1);
+                        }
+                    }catch (Exception e){
+                        Handler.ShowSnack("Houve um erro", "TaskActivity.GetCompany.onResponse: " + e.getMessage(), This, R_ID);
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                    Handler.ShowSnack("Houve um erro","TaskActivity.GetCompany.onFailure: " + t.toString(), This, R_ID);
+                }
+            });
+
+        }catch (Exception e){
+            Handler.ShowSnack("Houve um erro","TaskActivity.GetCompany: " + e.getMessage(), This, R_ID);
+        }
+    }
+
+    private void GetShop(RecyclerView recyclerView){
+        try {
+            Call<JsonObject> call = mainInterface.GetShop(getAppID(), SU.getSession(),TaskObject.get("company_id").getAsInt());
+            call.enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                    try {
+                        if (!Handler.isRequestError(response, This, R_ID)) {
+                            JsonObject jsonObject = response.body();
+                            JsonArray companyList = jsonObject.get("data").getAsJsonArray();
+
+                            taskComShoDepSubAdapter = new TaskComShoDepSubAdapter(companyList, TaskActivity.this, SU.getSession(), R_ID, TaskObject, null);
+                            recyclerView.setAdapter(taskComShoDepSubAdapter);
+
+                            SetComShoDepSubRecyclerView(recyclerView, 2);
+                        }
+                    }catch (Exception e){
+                        Handler.ShowSnack("Houve um erro", "TaskActivity.GetShop.onResponse: " + e.getMessage(), This, R_ID);
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                    Handler.ShowSnack("Houve um erro","TaskActivity.GetShop.onFailure: " + t.toString(), This, R_ID);
+                }
+            });
+
+        }catch (Exception e){
+            Handler.ShowSnack("Houve um erro","TaskActivity.GetShop: " + e.getMessage(), This, R_ID);
+        }
+    }
+
+    private void GetDepartment(RecyclerView recyclerView){
+        try {
+            JsonObject jsonCSDS = TaskObject.get("csds").getAsJsonArray().get(0).getAsJsonObject();
+
+            Call<JsonObject> call = mainInterface.GetDepartmentCheck(getAppID(),
+                    SU.getSession(),
+                    jsonCSDS.get("company_id").getAsInt(),
+                    jsonCSDS.get("shop_id").getAsInt(),
+                    TaskObject.get("id").getAsInt()
+            );
+
+            call.enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                    try{
+                        if (!Handler.isRequestError(response,This,R_ID)){
+                            JsonObject jsonObject = response.body();
+                            JsonArray departmentList = jsonObject.get("data").getAsJsonArray();
+
+                            taskComShoDepSubAdapter = new TaskComShoDepSubAdapter(departmentList, TaskActivity.this, SU.getSession(), R_ID, TaskObject, buttonDepartment);
+                            recyclerView.setAdapter(taskComShoDepSubAdapter);
+
+                            SetComShoDepSubRecyclerView(recyclerView,3);
+                        }
+                    }catch (Exception e) {
+                        Handler.ShowSnack("Houve um erro","TaskActivity.GetDepartment.onResponse: " + e.getMessage(), This, R_ID);
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                    Handler.ShowSnack("Houve um erro","TaskActivity.GetDepartment.onFailure: " + t.toString(), This, R_ID);
+                }
+            });
+
+        }catch (Exception e){
+            Handler.ShowSnack("Houve um erro","TaskActivity.GetDepartment: " + e.getMessage(), This, R_ID);
         }
     }
 
@@ -707,68 +879,253 @@ public class TaskActivity extends AppCompatActivity {
                             DialogHistoric.cancel();
                         }
                     }catch (Exception e){
-                        Handler.ShowSnack("Houve um erro","TaskActivity.GetHistoric.onResponse: " + e.getMessage(), This, R_ID,true);
+                        Handler.ShowSnack("Houve um erro","TaskActivity.GetHistoric.onResponse: " + e.getMessage(), This, R_ID);
                     }
                 }
 
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","TaskActivity.GetHistoric.onFailure: " + t.toString(), This, R_ID,true);
+                    Handler.ShowSnack("Houve um erro","TaskActivity.GetHistoric.onFailure: " + t.toString(), This, R_ID);
                 }
             });
 
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskActivity.GetHistoric: " + e.getMessage(), This, R_ID,true);
+            Handler.ShowSnack("Houve um erro","TaskActivity.GetHistoric: " + e.getMessage(), This, R_ID);
         }
     }
 
-    private void PutTaskState(int StateID, String HistoricDescription){
+    private void PostItem(){
         try {
-            JsonObject ItemObject = new JsonObject();
-            ItemObject.addProperty("state_id",StateID);
-            ItemObject.addProperty("task_id",TaskObject.get("id").getAsInt());
-            ItemObject.addProperty("historic_description",HistoricDescription);
+            if(textInputEditTextItem.getText().length()<1){
+                textInputEditTextItem.setError("Insira a descrição do item");
+                return;
+            }
 
-            Call<JsonObject> call = taskInterface.PutTaskState(getAppID(), SU.getSession(),ItemObject);
+            hideKeyboard(This,textInputEditTextItem);
+            Handler.ShowSnack("Aguarde...",null, This, R_ID);
+
+            JsonObject ItemObject = new JsonObject();
+            ItemObject.addProperty("description",textInputEditTextItem.getText().toString());
+            ItemObject.addProperty("task_id",TaskObject.get("id").getAsInt());
+            Call<JsonObject> call = taskInterface.PostTaskItem(getAppID(), SU.getSession(),ItemObject);
+            call.enqueue(new Callback<JsonObject>() {
+                @RequiresApi(api = Build.VERSION_CODES.N)
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                    try {
+                        if (!Handler.isRequestError(response,This,R_ID)){
+                            JsonObject jsonObject = response.body().get("data").getAsJsonObject();
+
+                            assert jsonObject != null;
+                            int ID = jsonObject.get("last_id").getAsInt();
+                            int StateID = jsonObject.get("state_id").getAsInt();
+                            int percent = jsonObject.get("percent").getAsInt();
+                            int order = jsonObject.get("order").getAsInt();
+                            int yes_no = jsonObject.get("yes_no").getAsInt();
+
+                            String s_percent = percent+"%";
+                            TextViewPercent.setText(s_percent);
+                            progressBar.setProgress(percent,true);
+
+                            ItemObject.addProperty("check",false);
+                            ItemObject.addProperty("id",ID);
+                            ItemObject.addProperty("order",order);
+                            ItemObject.addProperty("yes_no",yes_no);
+
+                            JsonObject jsonState = new JsonObject();
+                            for (int i = 0; i < stateList.size(); i++) {
+                                if(stateList.get(i).getAsJsonObject().get("id").getAsInt() == StateID){
+                                    jsonState = stateList.get(i).getAsJsonObject();
+                                    i=stateList.size();
+                                }
+                            }
+
+                            String StateDescription = jsonState.get("description").getAsString();
+                            String StateColor = "#"+jsonState.get("color").getAsString();
+                            buttonState.setText(StateDescription);
+                            buttonState.setBackgroundColor(Color.parseColor(StateColor));
+                            TaskObject.addProperty("state_id", StateID);
+
+                            boolean Lock = TaskObject.get("state_id").getAsInt() == 4 || TaskObject.get("state_id").getAsInt() == 5
+                                    || TaskObject.get("state_id").getAsInt() == 6 || TaskObject.get("state_id").getAsInt() == 7
+                                    || TaskObject.get("user_id").getAsInt() != SU.getId() && !SU.isAdministrator();
+
+                            if(taskItemAdapter == null){
+                                JsonArray CheckListArray = new JsonArray();
+                                CheckListArray.add(ItemObject);
+                                taskItemAdapter = new TaskItemAdapter(
+                                        CheckListArray,
+                                        TaskActivity.this,taskInterface,
+                                        SU,
+                                        R_ID,
+                                        TextViewPercent,
+                                        progressBar,
+                                        buttonState,
+                                        TaskObject,
+                                        recyclerViewChecklist,
+                                        stateList,
+                                        Lock
+                                );
+                                recyclerViewChecklist.setAdapter(taskItemAdapter);
+                            }else{
+                                taskItemAdapter.setNewItem(ItemObject);
+                                taskItemAdapter.notifyItemInserted(taskItemAdapter.getItemCount());
+                            }
+
+                            recyclerViewChecklist.smoothScrollToPosition(taskItemAdapter.getItemCount());
+                            textInputEditTextItem.setText("");
+
+                            Handler.ShowSnack("Novo item inserido",null, This, R_ID);
+                        }
+                    }catch (Exception e){
+                        Handler.ShowSnack("Houve um erro","TaskActivity.PostItem.onResponse: " + e.getMessage(), This, R_ID);
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                    Handler.ShowSnack("Houve um erro","TaskActivity.PostItem.onFailure: " + t.toString(), This, R_ID);
+                }
+            });
+
+        }catch (Exception e){
+            Handler.ShowSnack("Houve um erro","TaskActivity.PostItem: " + e.getMessage(), This, R_ID);
+        }
+    }
+
+    private void PutTaskState(JsonObject jsonObject){
+        try {
+
+            Call<JsonObject> call = taskInterface.PutTaskState(getAppID(), SU.getSession(),jsonObject);
             call.enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                     try {
                         if (!Handler.isRequestError(response,This,R_ID)){
                             JsonObject jsonObject = response.body();
-                            int StateID = jsonObject.get("state_id").getAsInt();
-                            String StateDescription = jsonObject.get("state_description").getAsString();
-                            String StateColor = "#"+jsonObject.get("state_color").getAsString();
+                            JsonArray jsonArray = jsonObject.get("data").getAsJsonArray();
+                            int ID = jsonArray.get(0).getAsJsonObject().get("id").getAsInt();
+                            String Description = jsonArray.get(0).getAsJsonObject().get("description").getAsString();
+                            String StateColor = "#"+jsonArray.get(0).getAsJsonObject().get("color").getAsString();
 
-                            TaskObject.addProperty("state_id",StateID);
-                            TaskObject.addProperty("state_description", StateDescription);
+                            TaskObject.addProperty("state_id",ID);
+                            TaskObject.addProperty("state_description", Description);
 
-                            buttonState.setText(StateDescription);
+                            buttonState.setText(Description);
                             buttonState.setBackgroundColor(Color.parseColor(StateColor));
 
-                            //PostHistoric(TaskObject.get("state_description").getAsString()+": "+HistoricDescription);
                             SetButtonLocker();
-
-                            /*if (taskItemAdapter != null){
-                                taskItemAdapter.setStateID(StateID, taskPosition);
-                                taskItemAdapter.notifyDataSetChanged();
-                            }*/
-
-                            Handler.ShowSnack("Estado atualizado",null, This, R_ID,false);
+                            Handler.ShowSnack("Estado atualizado",null, This, R_ID);
                         }
                     }catch (Exception e){
-                        Handler.ShowSnack("Houve um erro","TaskActivity.PutTaskState.onResponse: " + e.getMessage(), This, R_ID,true);
+                        Handler.ShowSnack("Houve um erro","TaskActivity.PutTaskState.onResponse: " + e.getMessage(), This, R_ID);
                     }
                 }
 
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","TaskActivity.PutTaskState.onFailure: " + t.toString(), This, R_ID,true);
+                    Handler.ShowSnack("Houve um erro","TaskActivity.PutTaskState.onFailure: " + t.toString(), This, R_ID);
                 }
             });
 
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskActivity.PutTaskState: " + e.getMessage(), This, R_ID,true);
+            Handler.ShowSnack("Houve um erro","TaskActivity.PutTaskState: " + e.getMessage(), This, R_ID);
+        }
+    }
+
+    private void PutTaskItemOrder(int ID, String NextOrPrevious){
+        try {
+            JsonObject ItemObject = new JsonObject();
+            ItemObject.addProperty("id",ID);
+            ItemObject.addProperty("task_id",TaskObject.get("id").getAsInt());
+            ItemObject.addProperty("next_or_previous",NextOrPrevious);
+
+            constraintLayoutOrder.setEnabled(false);
+            constraintLayoutOrder.setAlpha(0.2f);
+            Call<JsonObject> call = taskInterface.PutTaskItemOrder(getAppID(), SU.getSession(),ItemObject);
+            call.enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                    try {
+                        if(!Handler.isRequestError(response,This,R_ID)){
+                            if(NextOrPrevious.equalsIgnoreCase("next")){
+                                taskItemAdapter.ItemDown(SelectedItem);
+                                SelectedItem+=1;
+                            }else{
+                                taskItemAdapter.ItemUp(SelectedItem);
+                                SelectedItem-=1;
+                            }
+                        }
+
+                    }catch (Exception e){
+                        Handler.ShowSnack("Houve um erro","TaskActivity.PutTaskItemOrder.onResponse: " + e.getMessage(), This, R_ID);
+                    }
+
+                    constraintLayoutOrder.setEnabled(true);
+                    constraintLayoutOrder.setAlpha(1f);
+                }
+
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                    Handler.ShowSnack("Houve um erro","TaskActivity.PutTaskItemOrder.onFailure: " + t.toString(), This, R_ID);
+                    constraintLayoutOrder.setEnabled(true);
+                    constraintLayoutOrder.setAlpha(1f);
+                }
+            });
+
+        }catch (Exception e){
+            Handler.ShowSnack("Houve um erro","TaskActivity.PutTaskItemOrder: " + e.getMessage(), This, R_ID);
+            constraintLayoutOrder.setEnabled(true);
+            constraintLayoutOrder.setAlpha(1f);
+        }
+    }
+
+    private void PutTaskItemYesNoOnDialog(int position, int YesNo){
+        try {
+            JsonObject ItemObject = new JsonObject();
+            ItemObject.addProperty("id",taskItemAdapter.getItemID(position));
+            ItemObject.addProperty("yes_no",YesNo);
+            ItemObject.addProperty("task_id",TaskObject.get("id").getAsInt());
+
+            Call<JsonObject> call = taskInterface.PutTaskItemYesNo(getAppID(), SU.getSession(),ItemObject);
+            call.enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                    try {
+                        if(!Handler.isRequestError(response,This,R_ID)){
+                            JsonObject jsonObject = response.body();
+                            int percent = jsonObject.get("data").getAsJsonObject().get("percent").getAsInt();
+                            int StateID = jsonObject.get("data").getAsJsonObject().get("state_id").getAsInt();
+
+                            String StateDescription = stateList.get(StateID-1).getAsJsonObject().get("description").getAsString();
+                            String StateColor = "#"+stateList.get(StateID-1).getAsJsonObject().get("color").getAsString();
+                            TextViewPercent.setText(percent+"%");
+                            progressBar.setProgress(percent,true);
+
+                            buttonState.setText(StateDescription);
+                            buttonState.setBackgroundColor(Color.parseColor(StateColor));
+
+                            TaskObject.addProperty("state_id",StateID);
+
+                            taskItemAdapter.getItem(position).getAsJsonObject().addProperty("yes_no", YesNo);
+
+                            taskItemAdapter.getItem(position).getAsJsonObject().addProperty("check", YesNo == 1 || YesNo == 2);
+
+                            taskItemAdapter.notifyItemChanged(position);
+                        }
+                    }catch (Exception e){
+                        Handler.ShowSnack("Houve um erro","TaskActivity.PutTaskItemYesNoOnDialog.onResponse: " + e.getMessage(), This, R_ID);
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                    Handler.ShowSnack("Houve um erro","TaskActivity.PutTaskItemYesNoOnDialog.onFailure: " + t.toString(), This, R_ID);
+                }
+            });
+
+        }catch (Exception e){
+            Handler.ShowSnack("Houve um erro","TaskActivity.PutTaskItemYesNoOnDialog: " + e.getMessage(), This, R_ID);
         }
     }
 
@@ -802,147 +1159,55 @@ public class TaskActivity extends AppCompatActivity {
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                     try {
                         if (!Handler.isRequestError(response, This, R_ID)) {
-                            Handler.ShowSnack("Data final e estado da tarefa atualizados",null, This, R_ID,false);
+                            Handler.ShowSnack("Data final e estado da tarefa atualizados",null, This, R_ID);
                             DialogPutDays.cancel();
-
                             JsonObject jsonObject = response.body();
-                            int StateID = jsonObject.get("state_id").getAsInt();
-                            String StateDescription = jsonObject.get("state_description").getAsString();
-                            String StateColor = "#"+jsonObject.get("state_color").getAsString();
+                            JsonObject jsonData = jsonObject.get("data").getAsJsonObject();
+
+                            int StateID = jsonData.get("id").getAsInt();
+                            String FinalDate = jsonData.get("final_date").getAsString();
+
+                            String StateDescription = stateList.get(StateID-1).getAsJsonObject().get("description").getAsString();
+                            String StateColor = "#"+stateList.get(StateID-1).getAsJsonObject().get("color").getAsString();
+
                             buttonState.setText(StateDescription);
                             buttonState.setBackgroundColor(Color.parseColor(StateColor));
 
                             String InitialDate = TaskObject.get("initial_date").getAsString();
-                            String FinalDate = jsonObject.get("final_date").getAsString();
                             InitialDate = InitialDate.substring(8,10)+"/"+InitialDate.substring(5,7)+"/"+InitialDate.substring(0,4);
                             FinalDate = FinalDate.substring(8,10)+"/"+FinalDate.substring(5,7)+"/"+FinalDate.substring(0,4);
-                            TextViewDates.setText("Iniciou em "+InitialDate+"\nTermina em "+FinalDate);
+                            String setDate = "Iniciou em " + InitialDate + "\nTermina em " + FinalDate;
+                            TextViewDates.setText(setDate);
 
-                            TaskObject.addProperty("final_date", jsonObject.get("final_date").getAsString());
-                            TaskObject.addProperty("state_id", jsonObject.get("state_id").getAsString());
+                            TaskObject.addProperty("final_date", FinalDate);
+                            TaskObject.addProperty("state_id", StateID);
                             TaskObject.addProperty("expire", iDays);
 
                             SetButtonLocker();
                             SetAlpha();
                         }
                     }catch (Exception e){
-                        Handler.ShowSnack("Houve um erro","TaskActivity.DonePutDays.onResponse: " + e.getMessage(), This, R_ID,true);
+                        Handler.ShowSnack("Houve um erro","TaskActivity.DonePutDays.onResponse: " + e.getMessage(), This, R_ID);
                     }
                 }
 
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","TaskActivity.DonePutDays.onFailure: " + t.toString(), This, R_ID,true);
+                    Handler.ShowSnack("Houve um erro","TaskActivity.DonePutDays.onFailure: " + t.toString(), This, R_ID);
                 }
             });
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskActivity.DonePutDays: " + e.getMessage(), This, R_ID,true);
+            Handler.ShowSnack("Houve um erro","TaskActivity.DonePutDays: " + e.getMessage(), This, R_ID);
         }
-    }
-
-    private void GetTaskUser(RecyclerView recyclerView){
-        try {
-            Call<JsonObject> call = taskInterface.GetTaskUser(getAppID(), SU.getSession(),1, TaskObject.get("id").getAsInt());
-            call.enqueue(new Callback<JsonObject>() {
-                @Override
-                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
-                    try {
-                        if (!Handler.isRequestError(response,This,R_ID)){
-                            JsonObject jsonObject = response.body();
-                            JsonArray data = jsonObject.get("data").getAsJsonArray();
-
-                            taskCheckUserAdapter = new TaskCheckUserAdapter(
-                                    data,
-                                    TaskActivity.this,taskInterface,
-                                    SU.getSession(),
-                                    R_ID,
-                                    TaskObject.get("id").getAsInt(),
-                                    taskGuestAdapter
-                            );
-                            recyclerView.setAdapter(taskCheckUserAdapter);
-                        }
-                    }catch (Exception e){
-                        Handler.ShowSnack("Houve um erro","TaskActivity.GetTaskUser.onResponse: " + e.getMessage(), This, R_ID,true);
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","TaskActivity.GetTaskUser.onFailure: " + t.toString(), This, R_ID,true);
-                }
-            });
-
-        }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskActivity.GetTaskUser: " + e.getMessage(), This, R_ID,true);
-        }
-    }
-
-    private void SetRecyclerView(){
-        recyclerViewChecklist.addOnItemTouchListener(new RecyclerItemClickListener(
-                this, recyclerViewChecklist, new RecyclerItemClickListener.OnItemClickListener() {
-
-            public void onItemClick(View view, int position) {}
-
-            public boolean onLongItemClick(View view, final int position) {
-                try{
-                    if (TaskObject.get("user_id").getAsInt() != SU.getId() || !SU.isAdministrator()){
-                        Handler.ShowSnack("Você não pode fazer isso",
-                                "Somente o criador ou administradores podem alterar os itens desta tarefa, caso precise mudar algo entre em contato com seu administrador",
-                                This,
-                                R_ID,
-                                true
-                        );
-                        return false;
-                    }
-
-                    final int ID = taskItemAdapter.getItemID(position);
-
-                    DialogPutDescription = new Dialog(This,R.style.Theme_AppCompat_Dialog_MinWidth);
-                    DialogPutDescription.setContentView(R.layout.dialog_put_description);
-
-                    TextInputEditText textInputEditText = DialogPutDescription.findViewById(R.id.dialogPutDescription_TextInputEditText);
-                    Button buttonOK = DialogPutDescription.findViewById(R.id.dialogPutDescription_ButtonOk);
-                    Button buttonCancel = DialogPutDescription.findViewById(R.id.dialogPutDescription_ButtonCancel);
-
-                    textInputEditText.setText(taskItemAdapter.getItemDescription(position));
-                    textInputEditText.requestFocus();
-
-                    buttonOK.setOnClickListener(v ->{
-                        if(textInputEditText.getText().length() < 1){
-                            textInputEditText.setError("Digite a descrição");
-                            textInputEditText.requestFocus();
-                            return;
-                        }
-                        PutItemDescription(textInputEditText.getText().toString(),position, view);
-                        DialogPutDescription.cancel();
-                    });
-
-                    buttonCancel.setOnClickListener(v -> {
-                        DialogPutDescription.cancel();
-                    });
-
-                    DialogPutDescription.show();
-
-                    }catch (Exception e){
-                        Handler.ShowSnack("Houve um erro","TaskActivity.SetList.onLongItemClick: " + e.getMessage(), This, R_ID,true);
-                    }
-
-                return false;
-            }
-        }));
     }
 
     private void PutItemDescription(String Description, int position, View view){
         try{
             JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("table","gt_task_item");
-            jsonObject.addProperty("column","description");
-            jsonObject.addProperty("value",Description);
+            jsonObject.addProperty("task_id",TaskObject.get("id").getAsInt());
+            jsonObject.addProperty("description",Description);
             jsonObject.addProperty("id",taskItemAdapter.getItemID(position));
-            Call<JsonObject> call = utilsInterface.PutGenericField(
-                    SU.getSession(),
-                    jsonObject
-            );
+            Call<JsonObject> call = taskInterface.PutTaskItem(2,SU.getSession(),jsonObject);
 
             call.enqueue(new Callback<JsonObject>() {
                 @Override
@@ -951,20 +1216,20 @@ public class TaskActivity extends AppCompatActivity {
                         if (!Handler.isRequestError(response, This, R_ID)) {
                             taskItemAdapter.setItemDescription(Description, position);
                             hideKeyboard(getApplicationContext(),view);
-                            Handler.ShowSnack("Descrição do item foi atualizada",null, This, R_ID,false);
+                            Handler.ShowSnack("Descrição do item foi atualizada",null, This, R_ID);
                         }
                     }catch (Exception e){
-                        Handler.ShowSnack("Houve um erro","TaskActivity.PutItemDescription.onResponse: " + e.getMessage(), This, R_ID,true);
+                        Handler.ShowSnack("Houve um erro","TaskActivity.PutItemDescription.onResponse: " + e.getMessage(), This, R_ID);
                     }
                 }
 
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","TaskActivity.PutItemDescription.onFailure: " + t.toString(), This, R_ID,true);
+                    Handler.ShowSnack("Houve um erro","TaskActivity.PutItemDescription.onFailure: " + t.toString(), This, R_ID);
                 }
             });
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskActivity.PutItemDescription: " + e.getMessage(), This, R_ID,true);
+            Handler.ShowSnack("Houve um erro","TaskActivity.PutItemDescription: " + e.getMessage(), This, R_ID);
         }
     }
 
@@ -1023,174 +1288,33 @@ public class TaskActivity extends AppCompatActivity {
     private void PutFullDescription(String FullDescription){
         try{
             JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("table","gt_task");
-            jsonObject.addProperty("column","full_description");
-            jsonObject.addProperty("value",FullDescription);
+            jsonObject.addProperty("full_description",FullDescription);
             jsonObject.addProperty("id",TaskObject.get("id").getAsInt());
-            Call<JsonObject> call = utilsInterface.PutGenericField(SU.getSession(),jsonObject);
+            Call<JsonObject> call = mainInterface.PutTask(2,SU.getSession(),jsonObject);
             call.enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                     try {
                         if (!Handler.isRequestError(response,This,R_ID)){
                             TaskFullDescription.setText(FullDescription);
-                            Handler.ShowSnack("Descrição completa foi atualizada",null, This, R_ID,false);
+                            Handler.ShowSnack("Descrição completa foi atualizada",null, This, R_ID);
                         }
                     }catch (Exception e){
-                        Handler.ShowSnack("Houve um erro","TaskActivity.PutFullDescription.onResponse: " + e.getMessage(), This, R_ID,true);
+                        Handler.ShowSnack("Houve um erro","TaskActivity.PutFullDescription.onResponse: " + e.getMessage(), This, R_ID);
                     }
                 }
 
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","TaskActivity.PutFullDescription.onFailure: " + t.toString(), This, R_ID,true);
+                    Handler.ShowSnack("Houve um erro","TaskActivity.PutFullDescription.onFailure: " + t.toString(), This, R_ID);
                 }
             });
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskActivity.PutFullDescription: " + e.getMessage(), This, R_ID,true);
+            Handler.ShowSnack("Houve um erro","TaskActivity.PutFullDescription: " + e.getMessage(), This, R_ID);
         }
     }
 
-    private void GetCompany(RecyclerView recyclerView){
-        try {
-            Call<JsonObject> call = mainInterface.GetCompany(getAppID(), SU.getSession());
-            call.enqueue(new Callback<JsonObject>() {
-                @Override
-                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
-                    try {
-                        if (!Handler.isRequestError(response, This, R_ID)) {
-                            JsonObject jsonObject = response.body();
-                            JsonArray companyList = jsonObject.get("data").getAsJsonArray();
-
-                            taskComShoDepSubAdapter = new TaskComShoDepSubAdapter(companyList, TaskActivity.this, SU.getSession(), R_ID, TaskObject, null);
-                            recyclerView.setAdapter(taskComShoDepSubAdapter);
-
-                            SetComShoDepSubRecyclerView(recyclerView, 1);
-                        }
-                    }catch (Exception e){
-                        Handler.ShowSnack("Houve um erro", "TaskActivity.GetCompany.onResponse: " + e.getMessage(), This, R_ID, true);
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","TaskActivity.GetCompany.onFailure: " + t.toString(), This, R_ID,true);
-                }
-            });
-
-        }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskActivity.GetCompany: " + e.getMessage(), This, R_ID,true);
-        }
-    }
-
-    private void GetShop(RecyclerView recyclerView){
-        try {
-            Call<JsonObject> call = mainInterface.GetShop(getAppID(), SU.getSession(),TaskObject.get("company_id").getAsInt());
-            call.enqueue(new Callback<JsonObject>() {
-                @Override
-                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
-                    try {
-                        if (!Handler.isRequestError(response, This, R_ID)) {
-                            JsonObject jsonObject = response.body();
-                            JsonArray companyList = jsonObject.get("data").getAsJsonArray();
-
-                            taskComShoDepSubAdapter = new TaskComShoDepSubAdapter(companyList, TaskActivity.this, SU.getSession(), R_ID, TaskObject, null);
-                            recyclerView.setAdapter(taskComShoDepSubAdapter);
-
-                            SetComShoDepSubRecyclerView(recyclerView, 2);
-                        }
-                    }catch (Exception e){
-                        Handler.ShowSnack("Houve um erro", "TaskActivity.GetShop.onResponse: " + e.getMessage(), This, R_ID, true);
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","TaskActivity.GetShop.onFailure: " + t.toString(), This, R_ID,true);
-                }
-            });
-
-        }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskActivity.GetShop: " + e.getMessage(), This, R_ID,true);
-        }
-    }
-
-    private void GetDepartment(RecyclerView recyclerView){
-        try {
-            Call<JsonObject> call = mainInterface.GetDepartmentCheck(getAppID(),
-                    SU.getSession(),
-                    TaskObject.get("company_id").getAsInt(),
-                    TaskObject.get("shop_id").getAsInt(),
-                    TaskObject.get("id").getAsInt()
-            );
-            call.enqueue(new Callback<JsonObject>() {
-                @Override
-                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
-                    try{
-                        if (!Handler.isRequestError(response,This,R_ID)){
-                            JsonObject jsonObject = response.body();
-                            JsonArray departmentList = jsonObject.get("data").getAsJsonArray();
-
-                            taskComShoDepSubAdapter = new TaskComShoDepSubAdapter(departmentList, TaskActivity.this, SU.getSession(), R_ID, TaskObject, buttonDepartment);
-                            recyclerView.setAdapter(taskComShoDepSubAdapter);
-
-                            SetComShoDepSubRecyclerView(recyclerView,3);
-                        }
-                    }catch (Exception e) {
-                        Handler.ShowSnack("Houve um erro","TaskActivity.GetDepartment.onResponse: " + e.getMessage(), This, R_ID,true);
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","TaskActivity.GetDepartment.onFailure: " + t.toString(), This, R_ID,true);
-                }
-            });
-
-        }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskActivity.GetDepartment: " + e.getMessage(), This, R_ID,true);
-        }
-    }
-
-    private void SetComShoDepSubRecyclerView(RecyclerView recyclerView, int Type){
-        recyclerView.addOnItemTouchListener(new RecyclerItemClickListener(
-                this, recyclerView, new RecyclerItemClickListener.OnItemClickListener() {
-
-            public void onItemClick(View view, int position) {
-                switch (Type){
-                    case 1:
-                        buttonCompany.setText(taskComShoDepSubAdapter.getItem(position).get("description").getAsString());
-                        cardViewCompany.setAlpha(1F);
-                        cardViewShop.setVisibility(View.VISIBLE);
-                        cardViewShop.setAlpha(0.5F);
-                        buttonShop.setText("LOJA");
-                        TaskObject.addProperty("company_id", taskComShoDepSubAdapter.getItem(position).get("id").getAsInt());
-                        DialogComShoDepSub.cancel();
-                        break;
-                    case 2:
-                        buttonShop.setText(taskComShoDepSubAdapter.getItem(position).get("description").getAsString());
-                        cardViewShop.setAlpha(1F);
-                        cardViewDepartment.setVisibility(View.VISIBLE);
-                        cardViewDepartment.setAlpha(0.5F);
-                        buttonDepartment.setText("DEPART");
-                        TaskObject.addProperty("shop_id", taskComShoDepSubAdapter.getItem(position).get("id").getAsInt());
-                        DialogComShoDepSub.cancel();
-                        break;
-                    case 3:
-                        /*
-                        buttonDepartment.setText(taskComShoDepSubAdapter.getItem(position).get("description").getAsString());
-                        cardViewDepartment.setAlpha(1F);
-                        TaskObject.addProperty("department_id", taskComShoDepSubAdapter.getItem(position).get("id").getAsInt());
-*/
-                        break;
-                }
-            }
-
-            public boolean onLongItemClick(View view, final int position) { return false; }
-        }));
-    }
-
-    private void DialogStateChangeReason(int StateID){
+    private void DialogStateChangeReason(JsonObject jsonObject){
         try {
             DialogStateChangeReason = new Dialog(This,R.style.Theme_AppCompat_Dialog_MinWidth);
             DialogStateChangeReason.setContentView(R.layout.dialog_state_change_reason);
@@ -1209,7 +1333,8 @@ public class TaskActivity extends AppCompatActivity {
                     textInputEditTextPutDays.setError("Descreva um motivo");
                     return;
                 }
-                PutTaskState(StateID, textInputEditTextPutDays.getText().toString());
+                jsonObject.addProperty("reason",textInputEditTextPutDays.getText().toString());
+                PutTaskState(jsonObject);
                 DialogStateChangeReason.cancel();
             });
 
@@ -1217,7 +1342,7 @@ public class TaskActivity extends AppCompatActivity {
             DialogStateChangeReason.show();
 
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskActivity.DialogStateChangeReason: " + e.getMessage(), This, R_ID,true);
+            Handler.ShowSnack("Houve um erro","TaskActivity.DialogStateChangeReason: " + e.getMessage(), This, R_ID);
         }
     }
 
@@ -1234,7 +1359,7 @@ public class TaskActivity extends AppCompatActivity {
             DialogHistoric.show();
 
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskActivity.DialogStateChangeReason: " + e.getMessage(), This, R_ID,true);
+            Handler.ShowSnack("Houve um erro","TaskActivity.DialogStateChangeReason: " + e.getMessage(), This, R_ID);
         }
     }
 
@@ -1260,7 +1385,7 @@ public class TaskActivity extends AppCompatActivity {
             DialogPutDescription.show();
 
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskActivity.DialogPutFullDescription: " + e.getMessage(), This, R_ID,true);
+            Handler.ShowSnack("Houve um erro","TaskActivity.DialogPutFullDescription: " + e.getMessage(), This, R_ID);
         }
     }
 
@@ -1286,7 +1411,7 @@ public class TaskActivity extends AppCompatActivity {
             DialogPutDays.show();
 
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskActivity.DialogPutDays: " + e.getMessage(), This, R_ID,true);
+            Handler.ShowSnack("Houve um erro","TaskActivity.DialogPutDays: " + e.getMessage(), This, R_ID);
         }
     }
 
@@ -1313,7 +1438,7 @@ public class TaskActivity extends AppCompatActivity {
                             taskCheckUserAdapter.getFilter().filter(s);
                         }
                     }catch (Exception e){
-                        Handler.ShowSnack("Houve um erro","TaskActivity.DialogTaskUser.onQueryTextChange: " + e.getMessage(), This, R_ID,true);
+                        Handler.ShowSnack("Houve um erro","TaskActivity.DialogTaskUser.onQueryTextChange: " + e.getMessage(), This, R_ID);
                     }
                     return false;
                 }
@@ -1333,7 +1458,7 @@ public class TaskActivity extends AppCompatActivity {
             DialogTaskUser.show();
 
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskActivity.DialogTaskUser: " + e.getMessage(), This, R_ID,true);
+            Handler.ShowSnack("Houve um erro","TaskActivity.DialogTaskUser: " + e.getMessage(), This, R_ID);
         }
     }
 
@@ -1380,9 +1505,24 @@ public class TaskActivity extends AppCompatActivity {
             DialogComShoDepSub.show();
 
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskActivity.DialogTaskComShoDepSub: " + e.getMessage(), This, R_ID,true);
+            Handler.ShowSnack("Houve um erro","TaskActivity.DialogTaskComShoDepSub: " + e.getMessage(), This, R_ID);
         }
     }
 
+    public void IntentMessage(){
+        Intent intent = new Intent(this, MessageActivity.class);
+        intent.putExtra("task_id", TaskObject.get("id").getAsInt());
+        intent.putExtra("task_description", TaskObject.get("description").getAsString());
+        startActivity(intent);
+    }
+
+    public static void hideKeyboard(Context context, View view) {
+        try {
+            InputMethodManager keyboard = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+            keyboard.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
 }

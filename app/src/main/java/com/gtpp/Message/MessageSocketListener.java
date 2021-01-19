@@ -1,10 +1,10 @@
 package com.gtpp.Message;
 
 import android.app.AlertDialog;
+import android.graphics.Color;
 import android.os.Environment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -12,7 +12,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.gtpp.CommonClasses.ApiClient;
-import com.gtpp.CommonClasses.ApiClientForImage;
 import com.gtpp.CommonClasses.Handler;
 import com.gtpp.CommonClasses.RecyclerItemClickListener;
 import com.gtpp.CommonClasses.SavedUser;
@@ -21,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -45,6 +46,9 @@ public class MessageSocketListener extends WebSocketListener {
     private MessageInterface messageInterface = ApiClient.getApiClient().create(MessageInterface.class);
     private WebSocket webSocket;
 
+    private boolean Stop = false;
+    private boolean isConnected = false;
+
     public MessageSocketListener(MessageActivity activity, int R_ID, RecyclerView recyclerView, int TaskID, TextView textViewOffline){
         this.activity = activity;
         this.R_ID = R_ID;
@@ -66,7 +70,24 @@ public class MessageSocketListener extends WebSocketListener {
     @Override
     public void onOpen(WebSocket webSocket, Response response){
         super.onOpen(webSocket,response);
-        activity.runOnUiThread(() -> textViewOffline.setVisibility(View.INVISIBLE));
+        activity.runOnUiThread(() -> {
+            //textViewOffline.setVisibility(View.INVISIBLE);
+            textViewOffline.setText("Conectado");
+            textViewOffline.setTextColor(Color.GREEN);
+        });
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("auth", SU.getSession());
+        jsonObject.addProperty("app_id",2);
+
+        this.webSocket.send(jsonObject.toString());
+
+        new Timer().scheduleAtFixedRate(new TimerTask(){
+            @Override
+            public void run(){
+                Ping();
+            }
+        },0,10000);
+        isConnected = true;
     }
 
     @Override
@@ -78,59 +99,42 @@ public class MessageSocketListener extends WebSocketListener {
                 JsonParser jsonParser = new JsonParser();
                 JsonObject object = jsonParser.parse(text).getAsJsonObject();
 
-                if(object.get("type").getAsString().contains("user_message")){
-                    Log.i("onMessage",object.toString());
+                if (Handler.isMessageError(object,activity,R_ID)){
+                    textViewOffline.setText(object.get("message").getAsString());
+                    textViewOffline.setTextColor(Color.YELLOW);
+                    return;
+                }
+
+                if(!object.has("type")){
+                    Handler.ShowSnack("Houve um erro","Message type is NULL", activity, R_ID);
+                    return;
+                }
+
+                int Type = object.get("type").getAsInt();
+
+                textViewOffline.setText("Conectado");
+                textViewOffline.setTextColor(Color.GREEN);
+
+                if(Type == 1) {
                     JsonObject jsonMessage = new JsonObject();
-                    jsonMessage.addProperty("type", object.get("type").getAsString());
-                    jsonMessage.addProperty("id", object.get("message_id").getAsInt());
-                    jsonMessage.addProperty("description", object.get("description").getAsString());
+                    jsonMessage.addProperty("user_id", object.get("user_id").getAsString());
                     jsonMessage.addProperty("user_name", object.get("user_name").getAsString());
                     jsonMessage.addProperty("task_id", object.get("task_id").getAsInt());
-                    jsonMessage.addProperty("user_id", object.get("user_id").getAsInt());
-                    jsonMessage.addProperty("task_description", object.get("task_description").getAsString());
                     jsonMessage.addProperty("date_time", object.get("date_time").getAsString());
-                    jsonMessage.addProperty("image", object.get("image").getAsInt());
+
+                    JsonObject jsonInnerMessage = object.get("message").getAsJsonObject();
+
+                    jsonMessage.addProperty("description", jsonInnerMessage.get("description").getAsString());
 
                     adapter.setNewItem(jsonMessage);
                     recyclerView.smoothScrollToPosition(adapter.getItemCount());
-                    if (adapter.getItemCount()==1){
+                    if (adapter.getItemCount() == 1) {
                         recyclerView.setAdapter(adapter);
                     }
                 }
 
-                if(object.get("type").getAsString().contains("first_connection")){
-                    ResourceID = object.get("resource_id").getAsInt();
-                    //Handler.ShowSnack("Nova conexão",object.get("message").getAsString()+"\nID:"+ResourceID, activity,R_ID,true);
-                    JsonObject jsonObject = new JsonObject();
-                    jsonObject.addProperty("type","first_connection");
-                    jsonObject.addProperty("resource_id",ResourceID);
-                    jsonObject.addProperty("task_id",TaskID);
-                    jsonObject.addProperty("user_id",SU.getId());
-                    jsonObject.addProperty("user_name",SU.getUser());
-                    jsonObject.addProperty("session",SU.getSession());
-                    webSocket.send(jsonObject.toString());
-                }
-
-                if(object.get("type").getAsString().contains("message_delete")){
-                    int MessageID = object.get("message_id").getAsInt();
-                    int TaskID = object.get("task_id").getAsInt();
-                    int UserID = object.get("user_id").getAsInt();
-                    adapter.RemoveItemByID(MessageID);
-
-                    String path = activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES).getPath();
-                    File file = new File(path + "/Message_" + TaskID + "_" + MessageID + "_" + UserID + ".jpg");
-
-                    if(file.exists()) {
-                        file.delete();
-                    }
-                }
-
-                if(object.get("type").getAsString().contains("error")){
-                    Handler.ShowSnack("Houve um erro",object.get("message").getAsString(), activity,R_ID,true);
-                }
-
             }catch (Exception e){
-                Handler.ShowSnack("Houve um erro","MessageSocketListener.onMessage: "+e.getMessage(), activity, R_ID,true);
+                Handler.ShowSnack("Houve um erro","MessageSocketListener.onMessage: "+e.getMessage(), activity, R_ID);
             }
         });
     }
@@ -138,11 +142,19 @@ public class MessageSocketListener extends WebSocketListener {
     @Override
     public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
         super.onClosing(webSocket, code, reason);
+        activity.runOnUiThread(() -> {
+            textViewOffline.setText("Desconectando...");
+            textViewOffline.setTextColor(Color.RED);
+        });
     }
 
     @Override
     public void onClosed(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
         super.onClosed(webSocket, code, reason);
+        activity.runOnUiThread(() -> {
+            textViewOffline.setText("Desconectado");
+            textViewOffline.setTextColor(Color.RED);
+        });
     }
 
     @Override
@@ -150,23 +162,29 @@ public class MessageSocketListener extends WebSocketListener {
         try {
             super.onFailure(webSocket, t, response);
             //Handler.ShowSnack("Houve um erro","MessageSocketListener.onFailure(WebSocket): "+t.getMessage(), activity, R_ID,true);
-            activity.runOnUiThread(() -> textViewOffline.setVisibility(View.VISIBLE));
-            InstantiateWebSocket(this);
+            //activity.runOnUiThread(() -> textViewOffline.setVisibility(View.VISIBLE));
+            activity.runOnUiThread(() -> {
+                //textViewOffline.setVisibility(View.INVISIBLE);
+                textViewOffline.setText("Error (onFailure): " + t.getMessage());
+                textViewOffline.setTextColor(Color.RED);
+            });
+            if(!Stop){
+                this.webSocket.cancel();
+                InstantiateWebSocket(this);
+            }
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","MessageSocketListener.onFailure(WebSocket): "+e.getMessage(), activity, R_ID,true);
+            Handler.ShowSnack("Houve um erro","MessageSocketListener.onFailure(WebSocket): "+e.getMessage(), activity, R_ID);
         }
     }
 
-    public WebSocket InstantiateWebSocket(MessageSocketListener messageSocketListener) {
+    public void InstantiateWebSocket(MessageSocketListener messageSocketListener) {
         try {
             OkHttpClient client = new OkHttpClient();
-            //Request request = new Request.Builder().url("ws://192.168.0.99:3333/server.php").build();
-            Request request = new Request.Builder().url("ws://187.35.128.157:3333/server.php").build();
+            Request request = new Request.Builder().url("ws://192.168.0.99:3333/server.php").build();
+            //Request request = new Request.Builder().url("ws://187.35.128.157:3333/server.php").build();
             webSocket = client.newWebSocket(request, messageSocketListener);
-            return webSocket;
         }catch (Exception e){
             //Handler.ShowSnack("Houve um erro","InstantiateWebSocket: "+e.getMessage(), this, R_ID,true);
-            return null;
         }
     }
 
@@ -194,12 +212,12 @@ public class MessageSocketListener extends WebSocketListener {
 
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","MessageSocketListener.onFailure: " + t.toString(), activity, R_ID,true);
+                    Handler.ShowSnack("Houve um erro","MessageSocketListener.onFailure: " + t.toString(), activity, R_ID);
                 }
             });
 
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","MessageSocketListener.GetMessage: " + e.getMessage(), activity, R_ID,true);
+            Handler.ShowSnack("Houve um erro","MessageSocketListener.GetMessage: " + e.getMessage(), activity, R_ID);
         }
     }
 
@@ -212,7 +230,7 @@ public class MessageSocketListener extends WebSocketListener {
                 try {
 
                 }catch (Exception e){
-                    Handler.ShowSnack("Houve um erro","MessageSocketListener.SetList.onItemClick: " + e.getMessage(), activity, R_ID,true);
+                    Handler.ShowSnack("Houve um erro","MessageSocketListener.SetList.onItemClick: " + e.getMessage(), activity, R_ID);
                 }
             }
 
@@ -234,7 +252,7 @@ public class MessageSocketListener extends WebSocketListener {
                     alert.show();
 
                 }catch (Exception e){
-                    Handler.ShowSnack("Houve um erro","MessageSocketListener.SetList.onLongItemClick: " + e.getMessage(), activity, R_ID,true);
+                    Handler.ShowSnack("Houve um erro","MessageSocketListener.SetList.onLongItemClick: " + e.getMessage(), activity, R_ID);
                 }
                 return false;
             }
@@ -276,13 +294,31 @@ public class MessageSocketListener extends WebSocketListener {
 
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","MessageSocketListener.DeleteMessage.onFailure: " + t.toString(), activity, R_ID,true);
+                    Handler.ShowSnack("Houve um erro","MessageSocketListener.DeleteMessage.onFailure: " + t.toString(), activity, R_ID);
                 }
             });
 
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","MessageSocketListener.DeleteMessage: " + e.getMessage(), activity, R_ID,true);
+            Handler.ShowSnack("Houve um erro","MessageSocketListener.DeleteMessage: " + e.getMessage(), activity, R_ID);
         }
+    }
+
+    public void Stop(){
+        Stop = true;
+    }
+
+    public WebSocket getWebSocket(){
+        return webSocket;
+    }
+
+    private void Ping(){
+        if(!isConnected){
+            return;
+        }
+    }
+
+    private void Pong(){
+
     }
 
 }

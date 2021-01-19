@@ -61,7 +61,7 @@ public class StateAdapter extends RecyclerView.Adapter <StateAdapter.ViewHolder>
             });
         }catch (Exception e){
             if(!isBindViewHolderError) {
-                Handler.ShowSnack("Houve um erro", "onCreateViewHolder: " + e.getMessage(), activity, R_ID, true);
+                Handler.ShowSnack("Houve um erro", "onCreateViewHolder: " + e.getMessage(), activity, R_ID);
                 isBindViewHolderError=true;
             }
         }

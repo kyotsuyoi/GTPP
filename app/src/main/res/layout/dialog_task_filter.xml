@@ -69,7 +69,7 @@
 
     <TextView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:background="@color/colorAccent_"
         android:text="Departamento"
         android:textAlignment="center"
@@ -84,7 +84,7 @@
     <Spinner
         android:id="@+id/dialogTaskFilter_SpinnerDepart"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="38dp"
         android:alpha="1"
         android:background="@color/colorGrey" />
 

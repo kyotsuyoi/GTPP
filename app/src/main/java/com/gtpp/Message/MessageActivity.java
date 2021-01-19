@@ -2,7 +2,6 @@ package com.gtpp.Message;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -10,7 +9,6 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -23,18 +21,13 @@ import com.gtpp.CommonClasses.ApiClient;
 import com.gtpp.CommonClasses.ApiClientForImage;
 import com.gtpp.CommonClasses.Handler;
 import com.gtpp.CommonClasses.SavedUser;
-import com.gtpp.Main.MainActivity;
-import com.gtpp.Main.MainInterface;
 import com.gtpp.R;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 import java.util.Objects;
+import java.util.Random;
 
-import okhttp3.WebSocket;
 import retrofit2.Call;
 import retrofit2.Callback;
 
@@ -52,7 +45,6 @@ public class MessageActivity extends AppCompatActivity {
     private Button buttonSend, buttonCam;
     private ImageView imageView;
     private ProgressBar progressBar;
-    private WebSocket webSocket;
     private MessageSocketListener messageSocketListener;
     private MessageInterface messageInterface = ApiClient.getApiClient().create(MessageInterface.class);
     private MessageInterface messageInterfaceForImage = ApiClientForImage.getApiClient().create(MessageInterface.class);
@@ -83,7 +75,7 @@ public class MessageActivity extends AppCompatActivity {
 
             TaskID = getIntent().getIntExtra("task_id",0);
             textView.setText(getIntent().getStringExtra("task_description"));
-            Handler.SelectedTaskID = TaskID;
+            com.gtpp.CommonClasses.Handler.SelectedTaskID = TaskID;
             InstantiateWebSocket();
 
             SU = SavedUser.getSavedUser();
@@ -92,16 +84,16 @@ public class MessageActivity extends AppCompatActivity {
 
             recyclerView.requestFocus();
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro", "MessageActivity.onCreate: "+e.getMessage(), this, R_ID,true);
+            Handler.ShowSnack("Houve um erro", "MessageActivity.onCreate: "+e.getMessage(), this, R_ID);
         }
     }
 
     private void InstantiateWebSocket() {
         try {
             messageSocketListener = new MessageSocketListener(MessageActivity.this,R_ID,recyclerView, TaskID, textViewOffline);
-            webSocket = messageSocketListener.InstantiateWebSocket(messageSocketListener);
+            messageSocketListener.InstantiateWebSocket(messageSocketListener);
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","MessageActivity.InstantiateWebSocket: "+e.getMessage(), this, R_ID,true);
+            Handler.ShowSnack("Houve um erro","MessageActivity.InstantiateWebSocket: "+e.getMessage(), this, R_ID);
         }
     }
 
@@ -116,6 +108,18 @@ public class MessageActivity extends AppCompatActivity {
             buttonSend.setOnClickListener(v -> {
                 try {
                     String message = editText.getText().toString();
+
+                    JsonObject jsonObject = new JsonObject();
+
+                    jsonObject.addProperty("message",message);
+                    jsonObject.addProperty("task_id",getIntent().getIntExtra("task_id", 0));
+                    jsonObject.addProperty("user_id",SU.getId());
+                    jsonObject.addProperty("type",1);
+
+                    messageSocketListener.getWebSocket().request();
+                    messageSocketListener.getWebSocket().send(jsonObject.toString());
+
+                    /*String message = editText.getText().toString();
 
                     JsonObject jsonMessage = new JsonObject();
                     JsonObject jsonMessageWebSocket = new JsonObject();
@@ -151,9 +155,9 @@ public class MessageActivity extends AppCompatActivity {
                         editText.setText("");
                         imageView.setImageBitmap(null);
                         //webSocket.send(object.toString());
-                    }
+                    }*/
                 }catch (Exception e){
-                    Handler.ShowSnack("Houve um erro","MessageActivity.SetButton.buttonSend: "+e.getMessage(), this, R_ID,true);
+                    Handler.ShowSnack("Houve um erro","MessageActivity.SetButton.buttonSend: "+e.getMessage(), this, R_ID);
                 }
             });
 
@@ -169,12 +173,12 @@ public class MessageActivity extends AppCompatActivity {
                     intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
                     startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
                 }catch (Exception e){
-                    Handler.ShowSnack("Houve um erro", "MessageActivity.SetButton.buttonCam.setOnClickListener: "+e.getMessage(), this, R_ID,true);
+                    Handler.ShowSnack("Houve um erro", "MessageActivity.SetButton.buttonCam.setOnClickListener: "+e.getMessage(), this, R_ID);
                 }
             });
 
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","MessageActivity.SetButton: "+e.getMessage(), this, R_ID,true);
+            Handler.ShowSnack("Houve um erro","MessageActivity.SetButton: "+e.getMessage(), this, R_ID);
         }
     }
 
@@ -190,22 +194,26 @@ public class MessageActivity extends AppCompatActivity {
                 //Bitmap bitmap = Handler.ImageOrientation(MediaStore.Images.Media.getBitmap(this.getContentResolver(),uri), file);
                 //imageView.setImageBitmap(bitmap);
             }catch (Exception e){
-                Handler.ShowSnack("Houve um erro","MessageActivity.onActivityResult: "+e.getMessage(), this, R_ID,true);
+                Handler.ShowSnack("Houve um erro","MessageActivity.onActivityResult: "+e.getMessage(), this, R_ID);
             }
         }
     }
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
-        webSocket.cancel();
-        Handler.SelectedTaskID = 0;
+        try {
+            messageSocketListener.Stop();
+            com.gtpp.CommonClasses.Handler.SelectedTaskID = 0;
+            finish();
+        }catch (Exception e){
+            Handler.ShowSnack("Houve um erro","MessageActivity.onBackPressed: " + e.getMessage(), MessageActivity.this, R_ID);
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Handler.SelectedTaskID = 0;
+        com.gtpp.CommonClasses.Handler.SelectedTaskID = 0;
     }
 
     private void PostMessage(JsonObject jsonMessage, JsonObject jsonMessageWebSocket){
@@ -213,6 +221,8 @@ public class MessageActivity extends AppCompatActivity {
             progressBar.setVisibility(View.VISIBLE);
             buttonCam.setEnabled(false);
             buttonCam.setAlpha(0.2f);
+            buttonSend.setEnabled(false);
+            buttonSend.setAlpha(0.2f);
             Call<JsonObject> call = messageInterfaceForImage.PostMessage(getAppID(),
                     SU.getSession(),
                     jsonMessage
@@ -225,7 +235,7 @@ public class MessageActivity extends AppCompatActivity {
                             JsonObject jsonObject = response.body();
                             int ID = jsonObject.get("last_id").getAsInt();
                             jsonMessageWebSocket.addProperty("id", ID);
-                            webSocket.send(jsonMessageWebSocket.toString());
+                            messageSocketListener.getWebSocket().send(jsonMessageWebSocket.toString());
 
                             if(jsonMessageWebSocket.get("image").getAsInt() == 1){
                                 if(file != null && file.exists()) {
@@ -236,16 +246,18 @@ public class MessageActivity extends AppCompatActivity {
                             }
                         }
                     }catch (Exception e){
-                        Handler.ShowSnack("Houve um erro","MessageActivity.PostMessage.onResponse: " + e.getMessage(), MessageActivity.this, R_ID,true);
+                        Handler.ShowSnack("Houve um erro","MessageActivity.PostMessage.onResponse: " + e.getMessage(), MessageActivity.this, R_ID);
                     }
                     progressBar.setVisibility(View.INVISIBLE);
                     buttonCam.setEnabled(true);
                     buttonCam.setAlpha(1f);
+                    buttonSend.setEnabled(true);
+                    buttonSend.setAlpha(1f);
                 }
 
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","MessageActivity.PostMessage.onFailure: " + t.toString(), MessageActivity.this, R_ID,true);
+                    Handler.ShowSnack("Houve um erro","MessageActivity.PostMessage.onFailure: " + t.toString(), MessageActivity.this, R_ID);
                     progressBar.setVisibility(View.INVISIBLE);
                     buttonCam.setEnabled(true);
                     buttonCam.setAlpha(1f);
@@ -253,7 +265,7 @@ public class MessageActivity extends AppCompatActivity {
             });
 
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","MessageActivity.PostMessage: " + e.getMessage(), MessageActivity.this, R_ID,true);
+            Handler.ShowSnack("Houve um erro","MessageActivity.PostMessage: " + e.getMessage(), MessageActivity.this, R_ID);
             progressBar.setVisibility(View.INVISIBLE);
             buttonCam.setEnabled(true);
             buttonCam.setAlpha(1f);

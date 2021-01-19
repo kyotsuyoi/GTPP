@@ -21,6 +21,7 @@ import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.gtpp.CommonClasses.ApiClient;
 import com.gtpp.CommonClasses.Handler;
+import com.gtpp.CommonClasses.SavedUser;
 import com.gtpp.Main.MainInterface;
 import com.gtpp.R;
 
@@ -66,6 +67,7 @@ public class TaskGuestAdapter extends RecyclerView.Adapter <TaskGuestAdapter.Vie
             int TaskID = jsonObject.get("task_id").getAsInt();
             boolean StatusOK = jsonObject.get("status").getAsBoolean();
 
+            viewHolder.imageView.setImageBitmap(null);
             GetEmployeePhoto(viewHolder.imageView,UserID);
 
             if (StatusOK){
@@ -76,7 +78,7 @@ public class TaskGuestAdapter extends RecyclerView.Adapter <TaskGuestAdapter.Vie
 
             viewHolder.imageView.setOnClickListener(view -> GetEmployee(UserID));
 
-            if(!Lock && position > 0){
+            if(!Lock && position > 0 && UserID == SavedUser.getSavedUser().getId()){
                 viewHolder.imageView.setOnLongClickListener(view -> SetDialogDelete(TaskID,UserID,position));
             }else{
                 viewHolder.imageView.setOnLongClickListener(view -> false);
@@ -84,7 +86,7 @@ public class TaskGuestAdapter extends RecyclerView.Adapter <TaskGuestAdapter.Vie
 
         }catch (Exception e){
             if(!isBindViewHolderError) {
-                Handler.ShowSnack("Houve um erro", "TaskGuestAdapter.onBindViewHolder: " + e.getMessage(), activity, R_ID, true);
+                Handler.ShowSnack("Houve um erro", "TaskGuestAdapter.onBindViewHolder: " + e.getMessage(), activity, R_ID);
                 isBindViewHolderError=true;
             }
         }
@@ -151,7 +153,7 @@ public class TaskGuestAdapter extends RecyclerView.Adapter <TaskGuestAdapter.Vie
                         }
                     }catch (Exception e){
                         if(!isBindViewHolderError) {
-                            Handler.ShowSnack("Houve um erro", "TaskGuestAdapter.GetEmployeePhoto.onResponse: " + e.getMessage(), activity, R_ID, true);
+                            Handler.ShowSnack("Houve um erro", "TaskGuestAdapter.GetEmployeePhoto.onResponse: " + e.getMessage(), activity, R_ID);
                             isBindViewHolderError=true;
                         }
                     }
@@ -160,7 +162,7 @@ public class TaskGuestAdapter extends RecyclerView.Adapter <TaskGuestAdapter.Vie
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
                     if(!isBindViewHolderError) {
-                        Handler.ShowSnack("Houve um erro", "TaskGuestAdapter.GetEmployeePhoto.onFailure: " + t.toString(), activity, R_ID, true);
+                        Handler.ShowSnack("Houve um erro", "TaskGuestAdapter.GetEmployeePhoto.onFailure: " + t.toString(), activity, R_ID);
                         isBindViewHolderError=true;
                     }
                 }
@@ -168,7 +170,7 @@ public class TaskGuestAdapter extends RecyclerView.Adapter <TaskGuestAdapter.Vie
 
         }catch (Exception e){
             if(!isBindViewHolderError) {
-                Handler.ShowSnack("Houve um erro", "TaskGuestAdapter.GetEmployeePhoto: " + e.getMessage(), activity, R_ID, true);
+                Handler.ShowSnack("Houve um erro", "TaskGuestAdapter.GetEmployeePhoto: " + e.getMessage(), activity, R_ID);
                 isBindViewHolderError=true;
             }
         }
@@ -204,7 +206,7 @@ public class TaskGuestAdapter extends RecyclerView.Adapter <TaskGuestAdapter.Vie
             dialog.create();
             dialog.show();
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro", "TaskGuestAdapter.onImageClick: " + e.getMessage(), activity, R_ID, true);
+            Handler.ShowSnack("Houve um erro", "TaskGuestAdapter.onImageClick: " + e.getMessage(), activity, R_ID);
         }
     }
 
@@ -234,18 +236,18 @@ public class TaskGuestAdapter extends RecyclerView.Adapter <TaskGuestAdapter.Vie
                                 onImageClick(UserID);
                             }
                         }catch (Exception e){
-                            Handler.ShowSnack("Houve um erro","TaskGuestAdapter.GetEmployee.onResponse: " + e.getMessage(), activity, R_ID,true);
+                            Handler.ShowSnack("Houve um erro","TaskGuestAdapter.GetEmployee.onResponse: " + e.getMessage(), activity, R_ID);
                         }
                 }
 
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","TaskGuestAdapter.GetEmployee.onFailure: " + t.toString(), activity, R_ID,true);
+                    Handler.ShowSnack("Houve um erro","TaskGuestAdapter.GetEmployee.onFailure: " + t.toString(), activity, R_ID);
                 }
             });
 
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskGuestAdapter.GetEmployee: " + e.getMessage(), activity, R_ID,true);
+            Handler.ShowSnack("Houve um erro","TaskGuestAdapter.GetEmployee: " + e.getMessage(), activity, R_ID);
         }
     }
 
@@ -285,20 +287,20 @@ public class TaskGuestAdapter extends RecyclerView.Adapter <TaskGuestAdapter.Vie
                         if (!Handler.isRequestError(response, activity, R_ID)){
                             List.remove(position);
                             notifyItemRemoved(position);
-                            Handler.ShowSnack("Participante removido",null, activity, R_ID,false);
+                            Handler.ShowSnack("Participante removido",null, activity, R_ID);
                         }
                     }catch (Exception e) {
-                        Handler.ShowSnack("Houve um erro","TaskCheckUserAdapter.PutUser.onResponse: " + e.getMessage(), activity, R_ID,true);
+                        Handler.ShowSnack("Houve um erro","TaskCheckUserAdapter.PutUser.onResponse: " + e.getMessage(), activity, R_ID);
                     }
                 }
 
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
-                    Handler.ShowSnack("Houve um erro","TaskCheckUserAdapter.PutUser.onFailure: " + t.toString(), activity, R_ID,true);
+                    Handler.ShowSnack("Houve um erro","TaskCheckUserAdapter.PutUser.onFailure: " + t.toString(), activity, R_ID);
                 }
             });
         }catch (Exception e){
-            Handler.ShowSnack("Houve um erro","TaskCheckUserAdapter.PutUser: " + e.getMessage(), activity, R_ID,true);
+            Handler.ShowSnack("Houve um erro","TaskCheckUserAdapter.PutUser: " + e.getMessage(), activity, R_ID);
         }
     }
 

@@ -36,20 +36,20 @@ public interface MainInterface {
             @Body JsonObject jsonObject
     );
 
-    @GET("Company.php")
+    @GET("CCPP/Company.php")
     Call<JsonObject> GetCompany(
             @Query("app_id") int app_id,
             @Query("AUTH") String auth
     );
 
-    @GET("Shop.php")
+    @GET("CCPP/Shop.php")
     Call<JsonObject> GetShop(
             @Query("app_id") int app_id,
             @Query("AUTH") String auth,
             @Query("company_id") int company_id
     );
 
-    @GET("Departament.php")
+    @GET("CCPP/Department.php")
     Call<JsonObject> GetDepartment(
             @Query("app_id") int app_id,
             @Query("AUTH") String auth,
@@ -57,7 +57,7 @@ public interface MainInterface {
             @Query("shop_id") int shop_id
     );
 
-    @GET("Departament.php")
+    @GET("CCPP/Department.php")
     Call<JsonObject> GetDepartmentCheck(
             @Query("app_id") int app_id,
             @Query("AUTH") String auth,
@@ -79,17 +79,25 @@ public interface MainInterface {
             @Query("id") int id
     );
 
-    @GET("Employee.php")
+    @GET("CCPP/Employee.php")
     Call<JsonObject> GetEmployee(
             @Query("app_id") int app_id,
             @Query("AUTH") String auth,
             @Query("id") int id
     );
 
-    @GET("EmployeePhoto.php")
+    @GET("CCPP/EmployeePhoto.php")
     Call<JsonObject> GetEmployeePhoto(
             @Query("app_id") int app_id,
             @Query("AUTH") String auth,
             @Query("id") int id
+    );
+
+    @GET("GTPP/Score.php")
+    Call<JsonObject> GetScore(
+            @Query("app_id") int app_id,
+            @Query("AUTH") String auth,
+            @Query("user_id") int user_id,
+            @Query("all") String all
     );
 }
