@@ -107,55 +107,27 @@ public class MessageActivity extends AppCompatActivity {
         try{
             buttonSend.setOnClickListener(v -> {
                 try {
-                    String message = editText.getText().toString();
+                    String description = editText.getText().toString();
 
                     JsonObject jsonObject = new JsonObject();
 
-                    jsonObject.addProperty("message",message);
+                    jsonObject.addProperty("description",description);
                     jsonObject.addProperty("task_id",getIntent().getIntExtra("task_id", 0));
                     jsonObject.addProperty("user_id",SU.getId());
-                    jsonObject.addProperty("type",1);
-
-                    messageSocketListener.getWebSocket().request();
-                    messageSocketListener.getWebSocket().send(jsonObject.toString());
-
-                    /*String message = editText.getText().toString();
-
-                    JsonObject jsonMessage = new JsonObject();
-                    JsonObject jsonMessageWebSocket = new JsonObject();
-
-                    jsonMessage.addProperty("description",message);
-                    jsonMessage.addProperty("task_id",getIntent().getIntExtra("task_id", 0));
-                    jsonMessage.addProperty("user_id",SU.getId());
-
-                    jsonMessageWebSocket.addProperty("type", "user_message");
-                    jsonMessageWebSocket.addProperty("resource_id", messageSocketListener.getResourceID());
-                    jsonMessageWebSocket.addProperty("task_description", getIntent().getStringExtra("task_description"));
-                    jsonMessageWebSocket.addProperty("user_name", SU.getUser());
-                    jsonMessageWebSocket.addProperty("user_id", SU.getId());
-                    jsonMessageWebSocket.addProperty("task_id", getIntent().getIntExtra("task_id", 0));
-                    jsonMessageWebSocket.addProperty("description", message);
 
                     if (imageView.getDrawable() == null) {
-                        if (!message.isEmpty()) {
-                            jsonMessageWebSocket.addProperty("image", 0);
-                            PostMessage(jsonMessage,jsonMessageWebSocket);
-                            //object.addProperty("image_temp_id", -1);
-                            //webSocket.send(object.toString());
+                        if (!description.isEmpty()) {
+                            PostMessage(jsonObject);
                             editText.setText("");
                         }
                     }else{
                         Bitmap bitmap = Handler.ImageOrientation(MediaStore.Images.Media.getBitmap(this.getContentResolver(),uri), file);
-                        //bitmap = Handler.ImageOrientation(bitmap,file);
                         String EncodedImage = Handler.ImageEncode(bitmap);
-                        jsonMessageWebSocket.addProperty("image", 1);
-                        jsonMessage.addProperty("image", EncodedImage);
-                        //object.addProperty("image_temp_id", TempID);
-                        PostMessage(jsonMessage, jsonMessageWebSocket);
+                        jsonObject.addProperty("image", EncodedImage);
+                        PostMessage(jsonObject);
                         editText.setText("");
                         imageView.setImageBitmap(null);
-                        //webSocket.send(object.toString());
-                    }*/
+                    }
                 }catch (Exception e){
                     Handler.ShowSnack("Houve um erro","MessageActivity.SetButton.buttonSend: "+e.getMessage(), this, R_ID);
                 }
@@ -203,6 +175,7 @@ public class MessageActivity extends AppCompatActivity {
     public void onBackPressed() {
         try {
             messageSocketListener.Stop();
+            messageSocketListener.getWebSocket().cancel();
             com.gtpp.CommonClasses.Handler.SelectedTaskID = 0;
             finish();
         }catch (Exception e){
@@ -216,7 +189,7 @@ public class MessageActivity extends AppCompatActivity {
         com.gtpp.CommonClasses.Handler.SelectedTaskID = 0;
     }
 
-    private void PostMessage(JsonObject jsonMessage, JsonObject jsonMessageWebSocket){
+    private void PostMessage(JsonObject jsonMessage){
         try {
             progressBar.setVisibility(View.VISIBLE);
             buttonCam.setEnabled(false);
@@ -233,17 +206,32 @@ public class MessageActivity extends AppCompatActivity {
                     try {
                         if (!Handler.isRequestError(response, MessageActivity.this, R_ID)) {
                             JsonObject jsonObject = response.body();
-                            int ID = jsonObject.get("last_id").getAsInt();
-                            jsonMessageWebSocket.addProperty("id", ID);
-                            messageSocketListener.getWebSocket().send(jsonMessageWebSocket.toString());
+                            JsonObject jsonData = jsonObject.get("data").getAsJsonObject();
 
-                            if(jsonMessageWebSocket.get("image").getAsInt() == 1){
+                            int ID = jsonData.get("last_id").getAsInt();
+                            jsonMessage.addProperty("id", ID);
+                            jsonMessage.addProperty("date_time", jsonData.get("date_time").getAsString());
+
+                            JsonObject jsonSocket = new JsonObject();
+                            jsonSocket.addProperty("user_id", SU.getId());
+                            jsonSocket.addProperty("user_name", SU.getUser());
+                            jsonSocket.addProperty("task_id", getIntent().getIntExtra("task_id", 0));
+                            jsonSocket.addProperty("type",1);
+
+                            if(jsonMessage.has("image")){
                                 if(file != null && file.exists()) {
                                     String Name = "/Message_" + TaskID + "_" + ID + "_" + SU.getId();
                                     File NewFile = createImageFile(Name);
                                     file.renameTo(NewFile);
                                 }
+
+                                jsonMessage.addProperty("image","1");
+                            }else{
+                                jsonMessage.addProperty("image","0");
                             }
+
+                            jsonSocket.add("object", jsonMessage);
+                            messageSocketListener.getWebSocket().send(jsonSocket.toString());
                         }
                     }catch (Exception e){
                         Handler.ShowSnack("Houve um erro","MessageActivity.PostMessage.onResponse: " + e.getMessage(), MessageActivity.this, R_ID);

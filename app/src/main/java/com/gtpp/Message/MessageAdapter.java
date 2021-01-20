@@ -13,6 +13,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.gtpp.CommonClasses.ApiClient;
 import com.gtpp.CommonClasses.ApiClientForImage;
@@ -77,34 +78,40 @@ public class MessageAdapter extends RecyclerView.Adapter <MessageAdapter.ViewHol
             viewHolder.progressBarUser.setVisibility(View.INVISIBLE);
 
             if (jsonObject.has("user_name")){
-                //int MessageID = jsonObject.get("id").getAsInt();
+                int MessageID = jsonObject.get("id").getAsInt();
                 //int UserID = jsonObject.get("user_id").getAsInt();
 
                 if(jsonObject.get("user_name").getAsString().equals(SU.getUser())){
                     viewHolder.textViewUserName.setText(jsonObject.get("user_name").getAsString() + "           ");
-                    viewHolder.textViewUserMessage.setText(jsonObject.get("description").getAsString());
+
+                    if(jsonObject.get("description") != JsonNull.INSTANCE) {
+                        viewHolder.textViewUserMessage.setText(jsonObject.get("description").getAsString());
+                    }
                     viewHolder.cardViewUser.setVisibility(View.VISIBLE);
 
                     FormatDateTime(jsonObject.get("date_time").getAsString(),viewHolder.textViewUserDateTime);
 
-                    /*if(jsonObject.get("image").getAsInt() > 0){
-                        GetMessageImage(MessageID, UserID, viewHolder.imageViewUserPhoto,viewHolder.progressBarUser);
-                    }*/
+                    if(jsonObject.get("image").getAsString().equals("1")){
+                        GetMessageImage(MessageID, viewHolder.imageViewUserPhoto,viewHolder.progressBarUser);
+                    }
                 }else {
                     viewHolder.textViewName.setText(jsonObject.get("user_name").getAsString() + "           ");
-                    viewHolder.textViewMessage.setText(jsonObject.get("description").getAsString());
+
+                    if(jsonObject.get("description") != JsonNull.INSTANCE) {
+                        viewHolder.textViewMessage.setText(jsonObject.get("description").getAsString());
+                    }
                     viewHolder.cardView.setVisibility(View.VISIBLE);
 
                     FormatDateTime(jsonObject.get("date_time").getAsString(),viewHolder.textViewDateTime);
 
-                    /*if(jsonObject.get("image").getAsInt() > 0){
-                        GetMessageImage(MessageID, UserID, viewHolder.imageViewPhoto,viewHolder.progressBar);
-                    }*/
+                    if(jsonObject.get("image").getAsString() .equals("1")){
+                        GetMessageImage(MessageID, viewHolder.imageViewPhoto,viewHolder.progressBar);
+                    }
                 }
 
             }else{
                 viewHolder.textViewName.setText("Sistema: ");
-                viewHolder.textViewMessage.setText(jsonObject.get("message").getAsString());
+                viewHolder.textViewMessage.setText(jsonObject.get("description").getAsString());
                 viewHolder.cardView.setVisibility(View.VISIBLE);
             }
 
@@ -171,11 +178,11 @@ public class MessageAdapter extends RecyclerView.Adapter <MessageAdapter.ViewHol
         notifyItemInserted(List.size());
     }
 
-    private void GetMessageImage(int MessageID, int UserID, ImageView imageView, ProgressBar progressBar){
+    private void GetMessageImage(int MessageID, ImageView imageView, ProgressBar progressBar){
         try {
             progressBar.setVisibility(View.VISIBLE);
             String path = activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES).getPath();
-            File file = new File(path + "/Message_" + TaskID + "_" + MessageID + "_" + UserID + ".jpg");
+            File file = new File(path + "/Message_" + TaskID + "_" + MessageID + ".jpg");
 
             if(file.exists()){
                 /*Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());

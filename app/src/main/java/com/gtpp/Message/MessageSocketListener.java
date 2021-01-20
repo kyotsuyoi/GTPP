@@ -67,8 +67,7 @@ public class MessageSocketListener extends WebSocketListener {
         SetList();
     }
 
-    @Override
-    public void onOpen(WebSocket webSocket, Response response){
+    public void onOpen(@NotNull WebSocket webSocket, @NotNull Response response){
         super.onOpen(webSocket,response);
         activity.runOnUiThread(() -> {
             //textViewOffline.setVisibility(View.INVISIBLE);
@@ -81,12 +80,6 @@ public class MessageSocketListener extends WebSocketListener {
 
         this.webSocket.send(jsonObject.toString());
 
-        new Timer().scheduleAtFixedRate(new TimerTask(){
-            @Override
-            public void run(){
-                Ping();
-            }
-        },0,10000);
         isConnected = true;
     }
 
@@ -116,15 +109,8 @@ public class MessageSocketListener extends WebSocketListener {
                 textViewOffline.setTextColor(Color.GREEN);
 
                 if(Type == 1) {
-                    JsonObject jsonMessage = new JsonObject();
-                    jsonMessage.addProperty("user_id", object.get("user_id").getAsString());
+                    JsonObject jsonMessage = jsonParser.parse(object.get("object").getAsString()).getAsJsonObject();
                     jsonMessage.addProperty("user_name", object.get("user_name").getAsString());
-                    jsonMessage.addProperty("task_id", object.get("task_id").getAsInt());
-                    jsonMessage.addProperty("date_time", object.get("date_time").getAsString());
-
-                    JsonObject jsonInnerMessage = object.get("message").getAsJsonObject();
-
-                    jsonMessage.addProperty("description", jsonInnerMessage.get("description").getAsString());
 
                     adapter.setNewItem(jsonMessage);
                     recyclerView.smoothScrollToPosition(adapter.getItemCount());
@@ -309,16 +295,6 @@ public class MessageSocketListener extends WebSocketListener {
 
     public WebSocket getWebSocket(){
         return webSocket;
-    }
-
-    private void Ping(){
-        if(!isConnected){
-            return;
-        }
-    }
-
-    private void Pong(){
-
     }
 
 }
